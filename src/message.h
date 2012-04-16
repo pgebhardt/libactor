@@ -37,4 +37,10 @@ message_queue* message_queue_create(dispatch_queue_t dispatch_queue,
 // cleanup
 void message_queue_cleanup(message_queue* queue);
 
+// add new message to queue
+void message_queue_put(message_queue* queue, message_message* message);
+
+// get message from queue
+message_message* message_queue_get(message_queue* queue);
+
 #endif
