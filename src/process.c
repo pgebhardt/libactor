@@ -2,7 +2,7 @@
 #include "process.h"
 
 // spawn new process
-process_pid process_spawn(process_process_function function) {
+process_id process_spawn(process_process_function function) {
     // TODO
     // call process function
     function();

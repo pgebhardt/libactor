@@ -2,11 +2,14 @@
 #include "process.h"
 
 int main(int argc, char* argv[]) {
-    process_process_function function = ^{
-        printf("Hallo, was geht?\n");
-    };
+    // spawn dummy process
+    process_id pid = process_spawn(^{
+            // print some stuff
+            printf("Hallo du da, was geht?\n");
+        });
 
-    process_spawn(function);
+    // output pid
+    printf("Pid: %d\n", pid);
 
     return 0;
 }
