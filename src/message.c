@@ -78,7 +78,7 @@ void message_queue_cleanup(message_queue* queue) {
 // add new message to queue
 void message_queue_put(message_queue* queue, message_message* message) {
     // dispatch sync
-    dispatch_sync(queue->dispatch_queue, ^{
+    dispatch_async(queue->dispatch_queue, ^{
         // check if first message is NULL
         if (queue->first == NULL) {
             // set new message as first and last
@@ -104,10 +104,10 @@ message_message* message_queue_get(message_queue* queue, float timeout) {
         }
 
         // sleep a bit
-        usleep(100);
+        usleep(10);
 
         // decement timeout
-        timeout -= 0.1e-3f;
+        timeout -= 0.01e-3f;
     }
 
     // get message

@@ -32,7 +32,8 @@ void reduce(process_process* self, process_id parent, double* list, int size) {
 
         process_process* process2 = process_spawn(self->process_node,
             ^(process_process* s) {
-                reduce(s, self->pid, &(list[split - 1]), size - (split * sizeof(double)));
+                reduce(s, self->pid, &(list[split]),
+                    size - (split * sizeof(double)));
         });
 
         // gather results
@@ -40,8 +41,9 @@ void reduce(process_process* self, process_id parent, double* list, int size) {
         message_message* result2 = process_message_receive(self, 5.0f);
 
         // debug string
-        printf("Process: %d, Data: %f, %f\n", self->pid, *(double*)result1->message_data,
-            *(double*)result2->message_data);
+        printf("Process: %d, Data: %f, %f\n", self->pid,
+            *(double*)result1->message_data, *(double*)result2->message_data);
+
         // reduce result
         result = *(double*)result1->message_data +
             *(double*)result2->message_data;
@@ -49,27 +51,15 @@ void reduce(process_process* self, process_id parent, double* list, int size) {
         // cleanup messages
         message_message_cleanup(result1);
         message_message_cleanup(result2);
-
-        // cleanup processes
-        process_cleanup(process1);
-        process_cleanup(process2);
     }
 
     // send result to parent
-    if (parent != 10000) {
-        process_message_send(self->process_node, parent, message_message_create(
-            &result, sizeof(double)));
-    }
-    else {
-        printf("result: %f\n", result);
-    }
+    process_message_send(self, parent,
+        message_message_create(&result, sizeof(double)));
 }
 
-
-int main(int argc, char* argv[]) {
-    // create node
-    node_node* node = node_create(0, 100);
-
+void main_process(process_process* self) {
+    // data
     double* list = malloc(5 * sizeof(double));
     list[0] = 1.0;
     list[1] = 2.0;
@@ -78,14 +68,35 @@ int main(int argc, char* argv[]) {
     list[4] = 5.0;
 
     // start first reducer
-    process_process* reducer = process_spawn(node, ^(process_process* self) {
-            reduce(self, 10000, list, 5 * sizeof(double));
+    process_process* reducer = process_spawn(self->process_node, ^(process_process* s) {
+            reduce(s, self->pid, list, 5 * sizeof(double));
         });
 
-    sleep(5);
+    // get result
+    message_message* result = process_message_receive(self, 5.0f);
+
+    // print result
+    if (result != NULL) {
+        printf("Result: %f\n", *(double*)result->message_data);
+    }
+    else {
+        printf("Invalid result!\n");
+    }
 
     free(list);
-    process_cleanup(reducer);
+}
+
+int main(int argc, char* argv[]) {
+    // create node
+    node_node* node = node_create(0, 100);
+
+    // spawn main process
+    process_spawn(node, ^(process_process* self) {
+            main_process(self);
+        });
+
+    sleep(2);
+
     node_cleanup(node);
 
     return 0;

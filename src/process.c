@@ -17,7 +17,11 @@ process_process* process_spawn(node_node* node, process_process_function functio
 
     // call process function
     dispatch_async(node->concurrent_queue, ^(void) {
+            // call process kernel
             function(process);
+
+            // cleanup process
+            process_cleanup(process);
         });
 
     // return error pid
@@ -25,15 +29,16 @@ process_process* process_spawn(node_node* node, process_process_function functio
 }
 
 // message sendig
-message_message* process_message_send(node_node* node, process_id dest_id,
+message_message* process_message_send(process_process* process, process_id dest_id,
     message_message* message) {
     // check for correct dest_id
-    if (dest_id >= node->process_size) {
+    if (dest_id >= process->process_node->process_size) {
         return NULL;
     }
 
     // get destination message queue
-    message_queue* dest_queue = &(node->process_message_queues[dest_id]);
+    message_queue* dest_queue = &(process->process_node->process_message_queues[
+        dest_id]);
 
     // enqueue message
     message_queue_put(dest_queue, message);
