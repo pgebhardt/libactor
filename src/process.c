@@ -24,6 +24,23 @@ process_process* process_spawn(node_node* node, process_process_function functio
     return process;
 }
 
+// message sendig
+message_message* process_message_send(node_node* node, process_id dest_id,
+    message_message* message) {
+    // check for correct dest_id
+    if (dest_id >= node->process_size) {
+        return NULL;
+    }
+
+    // get destination message queue
+    message_queue* dest_queue = &(node->process_message_queues[dest_id]);
+
+    // enqueue message
+    message_queue_put(dest_queue, message);
+
+    return message;
+}
+
 // process cleanup
 void process_cleanup(process_process* process) {
     // free process memory

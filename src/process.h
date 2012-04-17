@@ -20,6 +20,10 @@ typedef void (^process_process_function)(process_process* const self);
 // spawn new process
 process_process* process_spawn(node_node* node, process_process_function function);
 
+// message sending
+message_message* process_message_send(node_node* node, process_id dest_id,
+    message_message* message);
+
 // process cleanup
 void process_cleanup(process_process* process);
 

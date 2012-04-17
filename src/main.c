@@ -52,8 +52,8 @@ int main(int argc, char* argv[]) {
     sleep(2);
 
     // send message
-    message_queue_put(process1->queue, message1);
-    message_queue_put(process2->queue, message2);
+    process_message_send(node, process1->pid, message1);
+    process_message_send(node, process2->pid, message2);
 
     // sleep a bit
     sleep(1);
