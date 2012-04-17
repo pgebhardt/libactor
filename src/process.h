@@ -14,7 +14,7 @@ typedef struct {
 } process_process;
 
 // Process block signature
-typedef void (^process_process_function)();
+typedef void (^process_process_function)(process_process* const self);
 
 // spawn new process
 process_process* process_spawn(process_process_function function);

@@ -13,15 +13,15 @@ process_process* process_spawn(process_process_function function) {
     // create message queue
     message_queue* queue = message_queue_create(concurrentQueue);
 
-    // call process function
-    dispatch_async(concurrentQueue, ^(void) {
-            function();
-        });
-
     // create process struct
     process_process* process = malloc(sizeof(process_process));
     process->queue = queue;
     process->pid = 0;
+
+    // call process function
+    dispatch_async(concurrentQueue, ^(void) {
+            function(process);
+        });
 
     // return error pid
     return process;

@@ -6,33 +6,30 @@
 
 int main(int argc, char* argv[]) {
     // spawn dummy process
-    process_process* process = process_spawn(^{
+    process_process* process = process_spawn(^(process_process* self){
             // print some stuff
             printf("Hallo du da, was geht?\n");
+
+            // receive message
+            message_message* message = message_queue_get(self->queue, 2.0f);
+
+            // output message
+            printf("Message received: %p\n", message);
+
+            free(message);
         });
 
     // output pid
     printf("Pid: %d\n", process->pid);
 
     // create message
-    message_message* message = NULL;
-    message_message* message1 = malloc(sizeof(message_message));
-    message_message* message2 = malloc(sizeof(message_message));
+    message_message* message = malloc(sizeof(message_message));
 
-    // enqueue message
-    message_queue_put(process->queue, message1);
-    message_queue_put(process->queue, message2);
+    // sleep a bit
+    sleep(2);
 
-    // debug strings
-    do {
-        printf("First: %p\n", process->queue->first);
-        printf("Last: %p\n", process->queue->last);
-
-        message = message_queue_get(process->queue, 1.0f);
-        printf("Current: %p\n", message);
-
-        free(message);
-    } while(message != NULL);
+    // send message
+    message_queue_put(process->queue, message);
 
     // sleep a bit
     sleep(1);
