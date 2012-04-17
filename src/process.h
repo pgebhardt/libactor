@@ -1,9 +1,8 @@
-#include <Block.h>
-#include "node.h"
-#include "message.h"
-
 #ifndef PROCESS_H
 #define PROCESS_H
+
+#include "node.h"
+#include "message.h"
 
 // Process Identifier
 typedef unsigned int process_id;
@@ -12,6 +11,7 @@ typedef unsigned int process_id;
 typedef struct {
     process_id pid;
     message_queue* queue;
+    node_node* process_node;
 } process_process;
 
 // Process block signature

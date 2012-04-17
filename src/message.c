@@ -34,6 +34,15 @@ message_queue* message_queue_create(dispatch_queue_t dispatch_queue) {
     // create new message struct
     message_queue* queue = malloc(sizeof(message_queue));
 
+    // init queue
+    message_queue_init(queue, dispatch_queue);
+
+    return queue;
+}
+
+// create new queue
+message_queue* message_queue_init(message_queue* queue,
+    dispatch_queue_t dispatch_queue) {
     // init parameter
     queue->dispatch_queue = dispatch_queue;
     queue->first = NULL;

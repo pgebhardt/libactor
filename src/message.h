@@ -1,7 +1,7 @@
-#include <dispatch/dispatch.h>
-
 #ifndef MESSAGE_H
 #define MESSAGE_H
+
+#include <dispatch/dispatch.h>
 
 // message size
 typedef unsigned int message_message_size;
@@ -34,6 +34,8 @@ void message_message_cleanup(message_message* message);
 
 // create new queue
 message_queue* message_queue_create(dispatch_queue_t dispatch_queue);
+message_queue* message_queue_init(message_queue* queue,
+    dispatch_queue_t dispatch_queue);
 
 // cleanup queue
 void message_queue_cleanup(message_queue* queue);
