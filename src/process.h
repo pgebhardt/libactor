@@ -11,7 +11,7 @@ typedef unsigned int process_id;
 typedef struct {
     process_id pid;
     message_queue* queue;
-    node_node* process_node;
+    node_node* node;
 } process_process;
 
 // Process block signature
@@ -25,7 +25,8 @@ message_message* process_message_send(process_process* process, process_id dest_
     message_message* message);
 
 // message receive
-message_message* process_message_receive(process_process* process, float timeout);
+message_message* process_message_receive(process_process* process,
+    message_queue_timeout timeout);
 
 // process cleanup
 void process_cleanup(process_process* process);

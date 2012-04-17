@@ -18,6 +18,9 @@ typedef unsigned int message_queue_length;
 typedef unsigned int message_queue_start;
 typedef unsigned int message_queue_end;
 
+// message queue timeout
+typedef float message_queue_timeout;
+
 // message queue
 typedef struct {
     dispatch_queue_t dispatch_queue;
@@ -44,6 +47,6 @@ void message_queue_cleanup(message_queue* queue);
 void message_queue_put(message_queue* queue, message_message* message);
 
 // get message from queue
-message_message* message_queue_get(message_queue* queue, float timeout);
+message_message* message_queue_get(message_queue* queue, message_queue_timeout timeout);
 
 #endif

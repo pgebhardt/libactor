@@ -14,6 +14,11 @@ node_node* node_create(node_id id, node_process_size size) {
     // create node
     node_node* node = malloc(sizeof(node_node));
 
+    // check for success
+    if (node == NULL) {
+        return NULL;
+    }
+
     // set attributes
     node->nid = id;
     node->serial_queue = serial_queue;
@@ -22,7 +27,19 @@ node_node* node_create(node_id id, node_process_size size) {
     // init 
     node->process_size = size;
     node->process_message_queues = malloc(sizeof(message_queue) * size);
+
+    // check for success
+    if (node->process_message_queues == NULL) {
+        return NULL;
+    }
+
+    // message queue usage
     node->message_queue_usage = malloc(sizeof(node_message_queue_usage) * size);
+
+    // check success
+    if (node->message_queue_usage == NULL) {
+        return NULL;
+    }
 
     for (node_process_size i = 0; i < size; i++) {
         message_queue_init(&(node->process_message_queues[i]), node->serial_queue);
@@ -36,6 +53,11 @@ node_node* node_create(node_id id, node_process_size size) {
 
 // get free message queue
 message_queue* node_message_queue_get_free(node_node* node, node_process_size* pid) {
+    // check for correct input
+    if ((node == NULL) || (pid == NULL)) {
+        return NULL;
+    }
+
     // get possible id
     node_process_size id = node->process_pos;
 
@@ -77,7 +99,17 @@ message_queue* node_message_queue_get_free(node_node* node, node_process_size* p
 
 // get message queue for id
 message_queue* node_message_queue_get(node_node* node, node_process_size pid) {
-    return NULL;
+    // check for valid node
+    if (node == NULL) {
+        return NULL;
+    }
+
+    // check for correct pid
+    if (pid >= node->process_size) {
+        return NULL;
+    }
+
+    return &node->process_message_queues[pid];
 }
 
 // release message queue
