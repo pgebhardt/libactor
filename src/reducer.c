@@ -8,7 +8,6 @@
 // reducer
 void reduce(process_process* self, process_id parent, double* list, int size) {
     double result = 0.0;
-    printf("Process: %d, Parent: %d, Size: %d\n", self->pid, parent, size);
 
     // check length of list
     if (size == sizeof(double)) {
@@ -21,8 +20,6 @@ void reduce(process_process* self, process_id parent, double* list, int size) {
     else {
         // split data
         int split = (size / sizeof(double)) / 2;
-        printf("Process: %d, Split: %d, Size: %d\n", self->pid,
-            split, (int)(size / sizeof(double)));
 
         // spawn reducer
         process_process* process1 = process_spawn(self->node,
@@ -36,12 +33,6 @@ void reduce(process_process* self, process_id parent, double* list, int size) {
                     size - (split * sizeof(double)));
         });
 
-        // check for success
-        if ((process1 == NULL) || (process2 == NULL)) {
-            printf("Process: %d, Could not spawn reducer!\n", self->pid);
-            return;
-        }
-
         // gather results
         message_message* result1 = process_message_receive(self, 5.0f);
         message_message* result2 = process_message_receive(self, 5.0f);
@@ -51,10 +42,6 @@ void reduce(process_process* self, process_id parent, double* list, int size) {
             printf("Process: %d, Did not get result from reducer!\n", self->pid);
             return;
         }
-
-        // debug string
-        printf("Process: %d, Data: %f, %f\n", self->pid,
-            *(double*)result1->message_data, *(double*)result2->message_data);
 
         // reduce result
         result = *(double*)result1->message_data +
@@ -79,6 +66,13 @@ void main_process(process_process* self) {
     list[3] = 4.0;
     list[4] = 5.0;
 
+    // print data
+    printf("Data: ");
+    for (int i = 0; i < 5; i++) {
+        printf("%f ", list[i]);
+    }
+    printf("\n");
+
     // start first reducer
     process_process* reducer = process_spawn(self->node, ^(process_process* s) {
             reduce(s, self->pid, list, 5 * sizeof(double));
@@ -100,15 +94,15 @@ void main_process(process_process* self) {
 
 int main(int argc, char* argv[]) {
     // create node
-    node_node* node = node_create(0, 100);
+    node_node* node = node_create(0, 65535);
 
     // spawn main process
     process_spawn(node, ^(process_process* self) {
             main_process(self);
         });
 
-    sleep(10);
 
+    sleep(4);
     node_cleanup(node);
 
     return 0;
