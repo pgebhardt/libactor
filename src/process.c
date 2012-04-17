@@ -4,10 +4,14 @@
 
 // spawn new process
 process_process* process_spawn(node_node* node, process_process_function function) {
-    // TODO
     // get free message queue
     process_id id = 0;
-    message_queue* queue = node_message_queue_get(node, &id);
+    message_queue* queue = node_message_queue_get_free(node, &id);
+
+    // check for valid queue
+    if (queue == NULL) {
+        return NULL;
+    }
 
     // create process struct
     process_process* process = malloc(sizeof(process_process));
@@ -54,6 +58,9 @@ message_message* process_message_receive(process_process* process, float timeout
 
 // process cleanup
 void process_cleanup(process_process* process) {
+    // release queue
+    node_message_queue_release(process->process_node, process->pid);
+
     // free process memory
     free(process);
 }

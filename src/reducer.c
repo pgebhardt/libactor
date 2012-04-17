@@ -36,9 +36,21 @@ void reduce(process_process* self, process_id parent, double* list, int size) {
                     size - (split * sizeof(double)));
         });
 
+        // check for success
+        if ((process1 == NULL) || (process2 == NULL)) {
+            printf("Process: %d, Could not spawn reducer!\n", self->pid);
+            return;
+        }
+
         // gather results
         message_message* result1 = process_message_receive(self, 5.0f);
         message_message* result2 = process_message_receive(self, 5.0f);
+
+        // check for success
+        if ((result1 == NULL) || (result2 == NULL)) {
+            printf("Process: %d, Did not get result from reducer!\n", self->pid);
+            return;
+        }
 
         // debug string
         printf("Process: %d, Data: %f, %f\n", self->pid,
@@ -88,14 +100,14 @@ void main_process(process_process* self) {
 
 int main(int argc, char* argv[]) {
     // create node
-    node_node* node = node_create(0, 100);
+    node_node* node = node_create(0, 3);
 
     // spawn main process
     process_spawn(node, ^(process_process* self) {
             main_process(self);
         });
 
-    sleep(2);
+    sleep(10);
 
     node_cleanup(node);
 
