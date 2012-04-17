@@ -11,7 +11,7 @@ process_process* process_spawn(process_process_function function) {
         DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
     // create message queue
-    message_queue* queue = message_queue_create(concurrentQueue, 100);
+    message_queue* queue = message_queue_create(concurrentQueue);
 
     // call process function
     dispatch_async(concurrentQueue, ^(void) {

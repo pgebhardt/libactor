@@ -14,6 +14,7 @@ typedef struct {
     message_id mid;
     message_message_length message_length;
     char* message_message;
+    struct message_message* next;
 } message_message;
 
 // message queue types
@@ -23,16 +24,13 @@ typedef unsigned int message_queue_end;
 
 // message queue
 typedef struct {
-    message_queue_length length;
-    message_queue_start start;
-    message_queue_end end;
     dispatch_queue_t dispatch_queue;
-    message_message* messages;
+    message_message* first;
+    message_message* last;
 } message_queue;
 
 // create new queue
-message_queue* message_queue_create(dispatch_queue_t dispatch_queue,
-    message_queue_length length);
+message_queue* message_queue_create(dispatch_queue_t dispatch_queue);
 
 // cleanup
 void message_queue_cleanup(message_queue* queue);
