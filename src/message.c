@@ -4,10 +4,10 @@
 #include "message.h"
 
 // create new message
-message_message* message_message_create(char* const data,
+message_message* message_message_create(void* const data,
     message_message_size size) {
     // copy data
-    char* dataCopy = malloc(sizeof(char) * size);
+    void* dataCopy = malloc(sizeof(char) * size);
     memcpy(dataCopy, data, sizeof(char) * size);
 
     // create message
@@ -68,18 +68,21 @@ void message_queue_cleanup(message_queue* queue) {
 
 // add new message to queue
 void message_queue_put(message_queue* queue, message_message* message) {
-    // check if first message is NULL
-    if (queue->first == NULL) {
-        // set new message as first and last
-        queue->first = message;
-        queue->last = message;
-        message->next = NULL;
-    }
-    else {
-        // set new message as last
-        queue->last->next = (struct message_message*)message;
-        queue->last = message;
-    }
+    // dispatch sync
+    dispatch_sync(queue->dispatch_queue, ^{
+        // check if first message is NULL
+        if (queue->first == NULL) {
+            // set new message as first and last
+            queue->first = message;
+            queue->last = message;
+            message->next = NULL;
+        }
+        else {
+            // set new message as last
+            queue->last->next = (struct message_message*)message;
+            queue->last = message;
+        }
+    });
 }
 
 // get message from queue

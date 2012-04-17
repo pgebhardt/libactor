@@ -1,4 +1,5 @@
 #include <Block.h>
+#include "node.h"
 #include "message.h"
 
 #ifndef PROCESS_H
@@ -17,7 +18,7 @@ typedef struct {
 typedef void (^process_process_function)(process_process* const self);
 
 // spawn new process
-process_process* process_spawn(process_process_function function);
+process_process* process_spawn(node_node* node, process_process_function function);
 
 // process cleanup
 void process_cleanup(process_process* process);

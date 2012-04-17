@@ -9,7 +9,7 @@ typedef unsigned int message_message_size;
 // message struct
 typedef struct {
     message_message_size message_size;
-    char* message_data;
+    void* message_data;
     struct message_message* next;
 } message_message;
 
@@ -26,7 +26,7 @@ typedef struct {
 } message_queue;
 
 // create new message
-message_message* message_message_create(char* const data,
+message_message* message_message_create(void* const data,
     message_message_size size);
 
 // cleanup message
