@@ -3,17 +3,13 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
-// message id
-typedef unsigned int message_id;
-
-// message length
-typedef unsigned int message_message_length;
+// message size
+typedef unsigned int message_message_size;
 
 // message struct
 typedef struct {
-    message_id mid;
-    message_message_length message_length;
-    char* message_message;
+    message_message_size message_size;
+    char* message_data;
     struct message_message* next;
 } message_message;
 
@@ -29,10 +25,17 @@ typedef struct {
     message_message* last;
 } message_queue;
 
+// create new message
+message_message* message_message_create(char* const data,
+    message_message_size size);
+
+// cleanup message
+void message_message_cleanup(message_message* message);
+
 // create new queue
 message_queue* message_queue_create(dispatch_queue_t dispatch_queue);
 
-// cleanup
+// cleanup queue
 void message_queue_cleanup(message_queue* queue);
 
 // add new message to queue

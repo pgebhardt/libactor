@@ -11,19 +11,20 @@ int main(int argc, char* argv[]) {
             printf("Hallo du da, was geht?\n");
 
             // receive message
-            message_message* message = message_queue_get(self->queue, 2.0f);
+            message_message* message = message_queue_get(self->queue, 4.0f);
 
             // output message
-            printf("Message received: %p\n", message);
+            printf("Message received: %s\n", message->message_data);
 
-            free(message);
+            // cleanup message
+            message_message_cleanup(message);
         });
 
     // output pid
     printf("Pid: %d\n", process->pid);
 
     // create message
-    message_message* message = malloc(sizeof(message_message));
+    message_message* message = message_message_create("Hallo", 6);
 
     // sleep a bit
     sleep(2);

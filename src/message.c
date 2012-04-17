@@ -1,6 +1,33 @@
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include "message.h"
+
+// create new message
+message_message* message_message_create(char* const data,
+    message_message_size size) {
+    // copy data
+    char* dataCopy = malloc(sizeof(char) * size);
+    memcpy(dataCopy, data, sizeof(char) * size);
+
+    // create message
+    message_message* message = malloc(sizeof(message_message));
+
+    // save data
+    message->message_data = dataCopy;
+    message->message_size = size;
+
+    return message;
+}
+
+// cleanup message
+void message_message_cleanup(message_message* message) {
+    // check for valid message
+    if (message != NULL) {
+        free(message->message_data);
+        free(message);
+    }
+}
 
 // create new queue
 message_queue* message_queue_create(dispatch_queue_t dispatch_queue) {
