@@ -24,21 +24,15 @@ int main(int argc, char* argv[]) {
     message_queue_put(process->queue, message2);
 
     // debug strings
-    message = process->queue->first;
-    int i;
-
-    while (message != NULL) {
-        i = 0;
+    do {
         printf("First: %p\n", process->queue->first);
         printf("Last: %p\n", process->queue->last);
 
-        while (message != NULL) {
-            printf("%d: %p\n", i, message);
-            message = (message_message*)message->next;
-            i++;
-        }
-        message = message_queue_get(process->queue);
-    }
+        message = message_queue_get(process->queue, 1.0f);
+        printf("Current: %p\n", message);
+
+        free(message);
+    } while(message != NULL);
 
     // sleep a bit
     sleep(1);

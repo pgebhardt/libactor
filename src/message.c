@@ -56,10 +56,19 @@ void message_queue_put(message_queue* queue, message_message* message) {
 }
 
 // get message from queue
-message_message* message_queue_get(message_queue* queue) {
+message_message* message_queue_get(message_queue* queue, float timeout) {
     // check for message
     while (queue->first == NULL) {
+        // check current timeout
+        if (timeout <= 0.0f) {
+            return NULL;
+        }
+
+        // sleep a bit
         usleep(100);
+
+        // decement timeout
+        timeout -= 0.1e-3f;
     }
 
     // get message

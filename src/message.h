@@ -39,6 +39,6 @@ void message_queue_cleanup(message_queue* queue);
 void message_queue_put(message_queue* queue, message_message* message);
 
 // get message from queue
-message_message* message_queue_get(message_queue* queue);
+message_message* message_queue_get(message_queue* queue, float timeout);
 
 #endif
