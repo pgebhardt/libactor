@@ -24,6 +24,9 @@ process_process* process_spawn(node_node* node, process_process_function functio
 message_message* process_message_send(node_node* node, process_id dest_id,
     message_message* message);
 
+// message receive
+message_message* process_message_receive(process_process* process, float timeout);
+
 // process cleanup
 void process_cleanup(process_process* process);
 

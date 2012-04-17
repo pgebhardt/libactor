@@ -41,6 +41,12 @@ message_message* process_message_send(node_node* node, process_id dest_id,
     return message;
 }
 
+// message receive
+message_message* process_message_receive(process_process* process, float timeout) {
+    // get message
+    return message_queue_get(process->queue, timeout);
+}
+
 // process cleanup
 void process_cleanup(process_process* process) {
     // free process memory
