@@ -1,6 +1,7 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
+#include <dispatch/dispatch.h>
 #include "message.h"
 #include "node.h"
 
@@ -11,6 +12,7 @@ typedef int process_id;
 typedef struct {
     process_id pid;
     message_queue* queue;
+    dispatch_queue_t dispatch_queue;
     node_node* node;
 } process_process;
 
@@ -27,5 +29,6 @@ message_message* process_message_receive(process_process* process,
 
 // process cleanup
 void process_cleanup(process_process* process);
+void process_release(process_process* process);
 
 #endif

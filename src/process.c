@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <dispatch/dispatch.h>
 #include "node.h"
 #include "process.h"
 
@@ -16,19 +15,16 @@ message_message* process_message_send(process_process* process, process_id dest_
         return NULL;
     }
 
-    // dispatch message get
-    dispatch_sync(process->node->serial_queue, ^ {
-            // get destination message queue
-            message_queue* dest_queue = node_message_queue_get(process->node, dest_id);
+    // get destination message queue
+    message_queue* dest_queue = node_message_queue_get(process->node, dest_id);
 
-            // check for succes
-            if (dest_queue == NULL) {
-                return;
-            }
+    // check for succes
+    if (dest_queue == NULL) {
+        return NULL;
+    }
 
-            // enqueue message
-            message_queue_put(dest_queue, message);
-        });
+    // enqueue message
+    message_queue_put(dest_queue, message);
 
     return message;
 }
@@ -54,6 +50,19 @@ void process_cleanup(process_process* process) {
 
     // release queue
     node_message_queue_release(process->node, process->pid);
+
+    // release dipatch queue
+    dispatch_release(process->dispatch_queue);
+}
+
+void process_release(process_process* process) {
+    // check for valid process
+    if (process == NULL) {
+        return;
+    }
+
+    // cleanup process
+    process_cleanup(process);
 
     // free process memory
     free(process);

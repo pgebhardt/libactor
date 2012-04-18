@@ -4,13 +4,6 @@
 
 // create node
 node_node* node_create(node_id id, node_process_size size) {
-    // create serial queue for message passing
-    dispatch_queue_t serial_queue = dispatch_queue_create("de.rub.est.actor", NULL);
-
-    // get concurrent queue
-    dispatch_queue_t concurrent_queue = dispatch_get_global_queue(
-        DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-
     // create node
     node_node* node = malloc(sizeof(node_node));
 
@@ -21,10 +14,8 @@ node_node* node_create(node_id id, node_process_size size) {
 
     // set attributes
     node->nid = id;
-    node->serial_queue = serial_queue;
-    node->concurrent_queue = concurrent_queue;
 
-    // init 
+    // init
     node->process_size = size;
     node->process_message_queues = malloc(sizeof(message_queue) * size);
 
@@ -42,7 +33,8 @@ node_node* node_create(node_id id, node_process_size size) {
     }
 
     for (node_process_size i = 0; i < size; i++) {
-        message_queue_init(&(node->process_message_queues[i]));
+        message_queue_init(&(node->process_message_queues[i]),
+            dispatch_queue_create("de.rub.est.actor", NULL));
         node->message_queue_usage[i] = false;
     }
 
@@ -71,8 +63,16 @@ process_process* node_start_process(node_node* node, process_process_function fu
     // create process struct
     __block process_process* process = malloc(sizeof(process_process));
 
-    // check for succes
+    // check for success
     if (process == NULL) {
+        return NULL;
+    }
+
+    // create dispatch queue
+    process->dispatch_queue = dispatch_queue_create("de.rub.est.actor", NULL);
+
+    // check for success
+    if (process->dispatch_queue == NULL) {
         return NULL;
     }
 
@@ -83,24 +83,26 @@ process_process* node_start_process(node_node* node, process_process_function fu
 
     // call process function
     if (blocking == true) {
-        dispatch_sync(node->concurrent_queue, ^(void) {
+        dispatch_sync(process->dispatch_queue, ^ {
                 // call process kernel
                 function(process);
-
-                // cleanup process
-                process_cleanup(process);
-
-                // set process pointer to NULL
-                process = NULL;
             });
+
+        // cleanup process
+        process_cleanup(process);
+
+        // set process pointer to NULL
+        process = NULL;
+
     }
     else {
-        dispatch_async(node->concurrent_queue, ^(void) {
+        dispatch_async(process->dispatch_queue, ^ {
                 // call process kernel
                 function(process);
 
+                // TODO
                 // cleanup process
-                process_cleanup(process);
+                // process_cleanup(process);
             });
     }
 
@@ -205,11 +207,31 @@ void node_message_queue_release(node_node* node, process_id pid) {
 
 // cleanup
 void node_cleanup(node_node* node) {
-    // release serial queue
-    dispatch_release(node->serial_queue);
+    // check for valid node
+    if (node == NULL) {
+        return;
+    }
+
+    // cleanup message queues
+    for (node_process_size i = 0; i < node->process_size; i++) {
+        message_queue_cleanup(&(node->process_message_queues[i]));
+    }
 
     // free message queues
     free(node->process_message_queues);
+
+    // free queue usage
+    free(node->message_queue_usage);
+}
+
+void node_release(node_node* node) {
+    // check for valid node
+    if (node == NULL) {
+        return;
+    }
+
+    // cleanup node
+    node_cleanup(node);
 
     // free memory
     free(node);

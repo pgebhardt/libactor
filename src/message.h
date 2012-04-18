@@ -25,6 +25,7 @@ typedef unsigned int message_queue_timeout;
 
 // message queue
 typedef struct {
+    dispatch_queue_t dispatch_queue;
     message_message* first;
     message_message* last;
 } message_queue;
@@ -35,13 +36,16 @@ message_message* message_message_create(void* const data,
 
 // cleanup message
 void message_message_cleanup(message_message* message);
+void message_message_release(message_message* message);
 
 // create new queue
-message_queue* message_queue_create();
-message_queue* message_queue_init(message_queue* queue);
+message_queue* message_queue_create(dispatch_queue_t dispatch_queue);
+message_queue* message_queue_init(message_queue* queue,
+    dispatch_queue_t dispatch_queue);
 
 // cleanup queue
 void message_queue_cleanup(message_queue* queue);
+void message_queue_release(message_queue* queue);
 
 // add new message to queue
 void message_queue_put(message_queue* queue, message_message* message);
