@@ -16,25 +16,28 @@ message_message* process_message_send(process_process* process, process_id dest_
         return NULL;
     }
 
-    // get destination message queue
-    message_queue* dest_queue = node_message_queue_get(process->node, dest_id);
+    // dispatch message get
+    dispatch_sync(process->node->serial_queue, ^ {
+            // get destination message queue
+            message_queue* dest_queue = node_message_queue_get(process->node, dest_id);
 
-    // check for succes
-    if (dest_queue == NULL) {
-        return NULL;
-    }
+            // check for succes
+            if (dest_queue == NULL) {
+                return;
+            }
 
-    // enqueue message
-    message_queue_put(dest_queue, message);
+            // enqueue message
+            message_queue_put(dest_queue, message);
+        });
 
     return message;
 }
 
 // message receive
 message_message* process_message_receive(process_process* process,
-    message_queue_timeout timeout) {
+    double timeout) {
     // check for correct input
-    if ((process == NULL) || (timeout < 0.0f)) {
+    if ((process == NULL) || (timeout < 0.0)) {
         return NULL;
     }
 

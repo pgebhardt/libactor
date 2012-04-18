@@ -23,7 +23,7 @@ message_message* process_message_send(process_process* process, process_id dest_
 
 // message receive
 message_message* process_message_receive(process_process* process,
-    message_queue_timeout timeout);
+    double timeout);
 
 // process cleanup
 void process_cleanup(process_process* process);

@@ -3,6 +3,8 @@
 
 #include <dispatch/dispatch.h>
 
+#define MESSAGE_MICROSECONDS_WAIT (10)
+
 // message size
 typedef unsigned int message_message_size;
 
@@ -19,11 +21,10 @@ typedef unsigned int message_queue_start;
 typedef unsigned int message_queue_end;
 
 // message queue timeout
-typedef float message_queue_timeout;
+typedef unsigned int message_queue_timeout;
 
 // message queue
 typedef struct {
-    dispatch_queue_t dispatch_queue;
     message_message* first;
     message_message* last;
 } message_queue;
@@ -36,9 +37,8 @@ message_message* message_message_create(void* const data,
 void message_message_cleanup(message_message* message);
 
 // create new queue
-message_queue* message_queue_create(dispatch_queue_t dispatch_queue);
-message_queue* message_queue_init(message_queue* queue,
-    dispatch_queue_t dispatch_queue);
+message_queue* message_queue_create();
+message_queue* message_queue_init(message_queue* queue);
 
 // cleanup queue
 void message_queue_cleanup(message_queue* queue);
@@ -47,6 +47,6 @@ void message_queue_cleanup(message_queue* queue);
 void message_queue_put(message_queue* queue, message_message* message);
 
 // get message from queue
-message_message* message_queue_get(message_queue* queue, message_queue_timeout timeout);
+message_message* message_queue_get(message_queue* queue, double timeout);
 
 #endif

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
 #include "message.h"
 
 // create new message
@@ -32,31 +33,24 @@ void message_message_cleanup(message_message* message) {
 }
 
 // create new queue
-message_queue* message_queue_create(dispatch_queue_t dispatch_queue) {
-    // check for valid dispatch queue
-    if (dispatch_queue == NULL) {
-        return NULL;
-    }
-
+message_queue* message_queue_create() {
     // create new message struct
     message_queue* queue = malloc(sizeof(message_queue));
 
     // init queue
-    message_queue_init(queue, dispatch_queue);
+    message_queue_init(queue);
 
     return queue;
 }
 
 // create new queue
-message_queue* message_queue_init(message_queue* queue,
-    dispatch_queue_t dispatch_queue) {
-    // check for correct input
-    if ((queue == NULL) || (dispatch_queue == NULL)) {
+message_queue* message_queue_init(message_queue* queue) {
+    // check for valid queue
+    if (queue == NULL) {
         return NULL;
     }
 
     // init parameter
-    queue->dispatch_queue = dispatch_queue;
     queue->first = NULL;
     queue->last = NULL;
 
@@ -99,43 +93,43 @@ void message_queue_put(message_queue* queue, message_message* message) {
         return;
     }
 
-    // dispatch sync
-    dispatch_async(queue->dispatch_queue, ^{
-        // check if first message is NULL
-        if (queue->first == NULL) {
-            // set new message as first and last
-            queue->first = message;
-            queue->last = message;
-            message->next = NULL;
-        }
-        else {
-            // set new message as last
-            queue->last->next = (struct message_message*)message;
-            queue->last = message;
-        }
-    });
+    // check if first message is NULL
+    if (queue->first == NULL) {
+        // set new message as first and last
+        queue->first = message;
+        queue->last = message;
+        message->next = NULL;
+    }
+    else {
+        // set new message as last
+        queue->last->next = (struct message_message*)message;
+        queue->last = message;
+    }
 }
 
 // get message from queue
 message_message* message_queue_get(message_queue* queue,
-    message_queue_timeout timeout) {
+    double timeout) {
     // check for correct input
-    if ((queue == NULL) || (timeout < 0.0f)) {
+    if ((queue == NULL) || (timeout < 0.0)) {
         return NULL;
     }
+
+    // convert timeout
+    message_queue_timeout t = (message_queue_timeout)(timeout * 1e6 / MESSAGE_MICROSECONDS_WAIT);
 
     // check for message
     while (queue->first == NULL) {
         // check current timeout
-        if (timeout <= 0.0f) {
+        if (t == 0) {
             return NULL;
         }
 
         // sleep a bit
-        usleep(10);
+        usleep(MESSAGE_MICROSECONDS_WAIT);
 
         // decement timeout
-        timeout -= 0.01e-3f;
+        t -= 1;
     }
 
     // get message

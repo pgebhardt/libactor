@@ -42,7 +42,7 @@ node_node* node_create(node_id id, node_process_size size) {
     }
 
     for (node_process_size i = 0; i < size; i++) {
-        message_queue_init(&(node->process_message_queues[i]), node->serial_queue);
+        message_queue_init(&(node->process_message_queues[i]));
         node->message_queue_usage[i] = false;
     }
 
