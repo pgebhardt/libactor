@@ -27,14 +27,20 @@ typedef struct {
 // create node
 node_node* node_create(node_id id, node_process_size size);
 
+// include process here, to make shure node struct is defined
+#include "process.h"
+
+// spawn new process
+process_process* node_process_spawn(node_node* node, process_process_function function);
+
 // get free message queue
-message_queue* node_message_queue_get_free(node_node* node, node_process_size* id);
+message_queue* node_message_queue_get_free(node_node* node, process_id* id);
 
 // get message queue for id
-message_queue* node_message_queue_get(node_node* node, node_process_size pid);
+message_queue* node_message_queue_get(node_node* node, process_id pid);
 
 // release message queue
-void node_message_queue_release(node_node* node, node_process_size pid);
+void node_message_queue_release(node_node* node, process_id pid);
 
 // cleanup
 void node_cleanup(node_node* node);

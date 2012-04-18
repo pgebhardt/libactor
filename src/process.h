@@ -1,8 +1,8 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
-#include "node.h"
 #include "message.h"
+#include "node.h"
 
 // Process Identifier
 typedef unsigned int process_id;
@@ -16,9 +16,6 @@ typedef struct {
 
 // Process block signature
 typedef void (^process_process_function)(process_process* const self);
-
-// spawn new process
-process_process* process_spawn(node_node* node, process_process_function function);
 
 // message sending
 message_message* process_message_send(process_process* process, process_id dest_id,

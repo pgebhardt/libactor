@@ -1,47 +1,7 @@
 #include <stdlib.h>
 #include <dispatch/dispatch.h>
+#include "node.h"
 #include "process.h"
-
-// spawn new process
-process_process* process_spawn(node_node* node, process_process_function function) {
-    // check for valid node
-    if (node == NULL) {
-        return NULL;
-    }
-    // get free message queue
-    process_id id = 0;
-    message_queue* queue = node_message_queue_get_free(node, &id);
-
-    // check for valid queue
-    if (queue == NULL) {
-        return NULL;
-    }
-
-    // create process struct
-    process_process* process = malloc(sizeof(process_process));
-
-    // check for succes
-    if (process == NULL) {
-        return NULL;
-    }
-
-    // save attributes
-    process->queue = queue;
-    process->pid = id;
-    process->node = node;
-
-    // call process function
-    dispatch_async(node->concurrent_queue, ^(void) {
-            // call process kernel
-            function(process);
-
-            // cleanup process
-            process_cleanup(process);
-        });
-
-    // return error pid
-    return process;
-}
 
 // message sendig
 message_message* process_message_send(process_process* process, process_id dest_id,
