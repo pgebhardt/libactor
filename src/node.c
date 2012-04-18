@@ -108,16 +108,16 @@ process_process* node_start_process(node_node* node, process_process_function fu
 }
 
 // spawn new process
-process_process* node_process_spawn(node_node* node, process_process_function function) {
+process_id node_process_spawn(node_node* node, process_process_function function) {
     // check for valid node
     if (node == NULL) {
-        return NULL;
+        return -1;
     }
 
     // start non blocking process
     process_process* process = node_start_process(node, function, false);
 
-    return process;
+    return process->pid;
 }
 
 // start main process
@@ -193,7 +193,7 @@ message_queue* node_message_queue_get(node_node* node, process_id pid) {
 }
 
 // release message queue
-void node_message_queue_release(node_node* node, node_process_size pid) {
+void node_message_queue_release(node_node* node, process_id pid) {
     // check for correct pid
     if (pid >= node->process_size) {
         return;

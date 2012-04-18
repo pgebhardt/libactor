@@ -35,7 +35,7 @@ process_process* node_start_process(node_node* node, process_process_function fu
     bool blocking);
 
 // spawn new process
-process_process* node_process_spawn(node_node* node, process_process_function function);
+process_id node_process_spawn(node_node* node, process_process_function function);
 
 // start main process
 void node_main_process(node_node* node, process_process_function function);
