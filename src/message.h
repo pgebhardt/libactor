@@ -3,7 +3,7 @@
 
 #include <dispatch/dispatch.h>
 
-#define MESSAGE_MICROSECONDS_WAIT (10)
+#define MESSAGE_MICROSECONDS_WAIT (100)
 
 // message size
 typedef unsigned int message_message_size;

@@ -22,12 +22,12 @@ void reduce(process_process* self, process_id parent, double* list, int size) {
         int split = (size / sizeof(double)) / 2;
 
         // spawn reducer
-        process_process* process1 = node_process_spawn(self->node,
+        process_id pid1 = node_process_spawn(self->node,
             ^(process_process* s) {
                 reduce(s, self->pid, list, split * sizeof(double));
         });
 
-        process_process* process2 = node_process_spawn(self->node,
+        process_id pid2 = node_process_spawn(self->node,
             ^(process_process* s) {
                 reduce(s, self->pid, &(list[split]),
                     size - (split * sizeof(double)));
@@ -48,8 +48,8 @@ void reduce(process_process* self, process_id parent, double* list, int size) {
             *(double*)result2->message_data;
 
         // cleanup messages
-        message_message_cleanup(result1);
-        message_message_cleanup(result2);
+        message_message_release(result1);
+        message_message_release(result2);
     }
 
     // send result to parent
@@ -59,23 +59,16 @@ void reduce(process_process* self, process_id parent, double* list, int size) {
 
 void main_process(process_process* self) {
     // data
-    double* list = malloc(5 * sizeof(double));
-    list[0] = 1.0;
-    list[1] = 2.0;
-    list[2] = 3.0;
-    list[3] = 4.0;
-    list[4] = 5.0;
+    int size = 1000;
+    double* list = malloc(size * sizeof(double));
 
-    // print data
-    printf("Data: ");
-    for (int i = 0; i < 5; i++) {
-        printf("%f ", list[i]);
+    for (int i = 0; i < size; i++) {
+        list[i] = (double)i;
     }
-    printf("\n");
 
     // start first reducer
-    process_process* reducer = node_process_spawn(self->node, ^(process_process* s) {
-            reduce(s, self->pid, list, 5 * sizeof(double));
+    process_id reducer = node_process_spawn(self->node, ^(process_process* s) {
+            reduce(s, self->pid, list, size * sizeof(double));
         });
 
     // get result
@@ -94,7 +87,7 @@ void main_process(process_process* self) {
 
 int main(int argc, char* argv[]) {
     // create node
-    node_node* node = node_create(0, 65535);
+    node_node* node = node_create(0, 100);
 
     // spawn main process
     node_main_process(node, ^(process_process* self) {
@@ -102,7 +95,7 @@ int main(int argc, char* argv[]) {
         });
 
     // cleanup
-    node_cleanup(node);
+    node_release(node);
 
     return 0;
 }

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <dispatch/dispatch.h>
 #include "node.h"
 #include "message.h"
 #include "process.h"
@@ -19,8 +20,8 @@ typedef struct {
 
 void main_process(process_process* main) {
     // circles
-    int circles = 2;
-    int processes = 8;
+    int circles = 100;
+    int processes = 200;
 
     // parent pid
     process_id parent = main->pid;
@@ -112,13 +113,13 @@ void main_process(process_process* main) {
 
 int main(int argc, char* argv[]) {
     // create node
-    node_node* node = node_create(0, 10000);
+    node_node* node = node_create(0, 1000);
 
     // time variables
-    clock_t start, end;
+    dispatch_time_t start, end;
 
     // get start time
-    start = clock();
+    start = dispatch_walltime(NULL, 0);
 
     // start main process
     node_main_process(node, ^(process_process* self) {
@@ -126,10 +127,10 @@ int main(int argc, char* argv[]) {
         });
 
     // get end time
-    end = clock();
+    end = dispatch_walltime(NULL, 0);
 
     // print execution time
-    printf("Execution Time: %f milliseconds\n", (double)(end - start) * 1000.0 / CLOCKS_PER_SEC);
+    printf("Execution Time: %f milliseconds\n", (double)(end - start) / 1e9);
 
     // cleanup
     sleep(1);
