@@ -6,12 +6,12 @@
 // create new message
 message_message* message_message_create(void* const data,
     message_message_size size) {
+    // create message
+    message_message* message = malloc(sizeof(message_message));
+
     // copy data
     void* dataCopy = malloc(sizeof(char) * size);
     memcpy(dataCopy, data, sizeof(char) * size);
-
-    // create message
-    message_message* message = malloc(sizeof(message_message));
 
     // save data
     message->message_data = dataCopy;

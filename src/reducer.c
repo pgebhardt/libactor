@@ -22,12 +22,12 @@ void reduce(process_process* self, process_id parent, double* list, int size) {
         int split = (size / sizeof(double)) / 2;
 
         // spawn reducer
-        process_process* process1 = process_spawn(self->node,
+        process_process* process1 = node_process_spawn(self->node,
             ^(process_process* s) {
                 reduce(s, self->pid, list, split * sizeof(double));
         });
 
-        process_process* process2 = process_spawn(self->node,
+        process_process* process2 = node_process_spawn(self->node,
             ^(process_process* s) {
                 reduce(s, self->pid, &(list[split]),
                     size - (split * sizeof(double)));
@@ -74,7 +74,7 @@ void main_process(process_process* self) {
     printf("\n");
 
     // start first reducer
-    process_process* reducer = process_spawn(self->node, ^(process_process* s) {
+    process_process* reducer = node_process_spawn(self->node, ^(process_process* s) {
             reduce(s, self->pid, list, 5 * sizeof(double));
         });
 
@@ -97,12 +97,11 @@ int main(int argc, char* argv[]) {
     node_node* node = node_create(0, 65535);
 
     // spawn main process
-    process_spawn(node, ^(process_process* self) {
+    node_main_process(node, ^(process_process* self) {
             main_process(self);
         });
 
-
-    sleep(4);
+    // cleanup
     node_cleanup(node);
 
     return 0;

@@ -8,9 +8,9 @@ typedef unsigned int message_message_size;
 
 // message struct
 typedef struct {
+    struct message_message* next;
     message_message_size message_size;
     void* message_data;
-    struct message_message* next;
 } message_message;
 
 // message queue types

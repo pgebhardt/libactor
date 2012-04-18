@@ -51,12 +51,14 @@ node_node* node_create(node_id id, node_process_size size) {
     return node;
 }
 
-// spawn new process
-process_process* node_process_spawn(node_node* node, process_process_function function) {
+// start process
+process_process* node_start_process(node_node* node, process_process_function function,
+    bool blocking) {
     // check for valid node
     if (node == NULL) {
         return NULL;
     }
+
     // get free message queue
     process_id id = 0;
     message_queue* queue = node_message_queue_get_free(node, &id);
@@ -67,7 +69,7 @@ process_process* node_process_spawn(node_node* node, process_process_function fu
     }
 
     // create process struct
-    process_process* process = malloc(sizeof(process_process));
+    __block process_process* process = malloc(sizeof(process_process));
 
     // check for succes
     if (process == NULL) {
@@ -80,17 +82,55 @@ process_process* node_process_spawn(node_node* node, process_process_function fu
     process->node = node;
 
     // call process function
-    dispatch_async(node->concurrent_queue, ^(void) {
-            // call process kernel
-            function(process);
+    if (blocking == true) {
+        dispatch_sync(node->concurrent_queue, ^(void) {
+                // call process kernel
+                function(process);
 
-            // cleanup process
-            process_cleanup(process);
-        });
+                // cleanup process
+                process_cleanup(process);
 
-    // return error pid
+                // set process pointer to NULL
+                process = NULL;
+            });
+    }
+    else {
+        dispatch_async(node->concurrent_queue, ^(void) {
+                // call process kernel
+                function(process);
+
+                // cleanup process
+                process_cleanup(process);
+            });
+    }
+
     return process;
 }
+
+// spawn new process
+process_process* node_process_spawn(node_node* node, process_process_function function) {
+    // check for valid node
+    if (node == NULL) {
+        return NULL;
+    }
+
+    // start non blocking process
+    process_process* process = node_start_process(node, function, false);
+
+    return process;
+}
+
+// start main process
+void node_main_process(node_node* node, process_process_function function) {
+    // check for valid node
+    if (node == NULL) {
+        return;
+    }
+
+    // start blocking process
+    node_start_process(node, function, true);
+}
+
 // get free message queue
 message_queue* node_message_queue_get_free(node_node* node, process_id* pid) {
     // check for correct input

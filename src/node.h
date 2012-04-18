@@ -30,8 +30,15 @@ node_node* node_create(node_id id, node_process_size size);
 // include process here, to make shure node struct is defined
 #include "process.h"
 
+// start process
+process_process* node_start_process(node_node* node, process_process_function function,
+    bool blocking);
+
 // spawn new process
 process_process* node_process_spawn(node_node* node, process_process_function function);
+
+// start main process
+void node_main_process(node_node* node, process_process_function function);
 
 // get free message queue
 message_queue* node_message_queue_get_free(node_node* node, process_id* id);
