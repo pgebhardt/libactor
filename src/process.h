@@ -5,7 +5,7 @@
 #include "node.h"
 
 // Process Identifier
-typedef unsigned int process_id;
+typedef int process_id;
 
 // Process struct
 typedef struct {
