@@ -157,9 +157,9 @@ actor_message_t actor_message_queue_get(actor_message_queue_t queue,
     }
 
     // get message recource
-    // TODO: timeout
     long err = dispatch_semaphore_wait(queue->semaphore_messages,
-        DISPATCH_TIME_FOREVER);
+        dispatch_time(DISPATCH_TIME_NOW,
+            (dispatch_time_t)(timeout * (double)NSEC_PER_SEC)));
 
     // check for timeout
     if (err != 0) {
