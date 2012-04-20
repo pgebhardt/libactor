@@ -7,33 +7,24 @@
 #include "process.h"
 
 void main_process(process_process* main) {
+    int size = 10;
+
     // process function
     process_process_function function = ^(process_process* self) {
-            // wait a second
-            sleep(1);
-
-            // create answer
-            char answer[100];
-            sprintf(answer, "Hi, i'm process %d!", self->pid);
-
-            // send message to parent
+            printf("Ich bin Prozess %d!\n", self->pid);
             process_message_send(self, main->pid,
-                message_message_create(answer, strlen(answer) + 1));
+                message_message_create("Hallo", 6));
         };
 
-    // start processes
-    for (int i = 0; i < 100; i++) {
+    // start dummy process
+    for (int i = 0; i < size; i++) {
         node_process_spawn(main->node, function);
     }
 
-    // gather messages
-    while (true) {
+    // receive messages
+    for (int i = 0; i < size; i++) {
         // receive message
-        message_message* message = process_message_receive(main, 2.0);
-
-        if (message == NULL) {
-            return;
-        }
+        message_message* message = process_message_receive(main, 10.0);
 
         // output message
         printf("%s\n", (char*)message->message_data);
@@ -45,7 +36,7 @@ void main_process(process_process* main) {
 
 int main(int argc, char* argv[]) {
     // create node
-    node_node* node = node_create(0, 1000);
+    node_node* node = node_create(0, 2000);
 
     // start main process
     node_main_process(node, ^(process_process* self) {

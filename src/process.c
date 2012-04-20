@@ -38,7 +38,7 @@ message_message* process_message_receive(process_process* process,
     }
 
     // get message
-    return message_queue_get(process->queue, timeout);
+    return message_queue_get(process->message_queue, timeout);
 }
 
 // process cleanup
@@ -50,9 +50,6 @@ void process_cleanup(process_process* process) {
 
     // release queue
     node_message_queue_release(process->node, process->pid);
-
-    // release dipatch queue
-    dispatch_release(process->dispatch_queue);
 }
 
 void process_release(process_process* process) {

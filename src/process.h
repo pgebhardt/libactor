@@ -11,7 +11,7 @@ typedef int process_id;
 // Process struct
 typedef struct {
     process_id pid;
-    message_queue* queue;
+    message_queue* message_queue;
     dispatch_queue_t dispatch_queue;
     node_node* node;
 } process_process;

@@ -12,20 +12,16 @@ void main_process(process_process* self) {
 
     // process function
     process_process_function function = ^(process_process* s) {
-        sleep(1);
         printf("I'm procces %d!\n", s->pid);
     };
 
     // create processes
     for (int i = 0; i < processes; i++) {
-        pids[i] = node_process_spawn(self->node, function);
+        node_process_spawn(self->node, function);
     }
 
     // wait
     sleep(2);
-
-    // free memory
-    free(pids);
 }
 
 int main(int argc, char* argv[]) {

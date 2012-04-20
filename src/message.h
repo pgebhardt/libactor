@@ -20,12 +20,10 @@ typedef unsigned int message_queue_length;
 typedef unsigned int message_queue_start;
 typedef unsigned int message_queue_end;
 
-// message queue timeout
-typedef unsigned int message_queue_timeout;
-
 // message queue
 typedef struct {
-    dispatch_queue_t dispatch_queue;
+    dispatch_semaphore_t semaphore_read_write;
+    dispatch_semaphore_t semaphore_messages;
     message_message* first;
     message_message* last;
 } message_queue;
@@ -39,9 +37,8 @@ void message_message_cleanup(message_message* message);
 void message_message_release(message_message* message);
 
 // create new queue
-message_queue* message_queue_create(dispatch_queue_t dispatch_queue);
-message_queue* message_queue_init(message_queue* queue,
-    dispatch_queue_t dispatch_queue);
+message_queue* message_queue_create();
+message_queue* message_queue_init(message_queue* queue);
 
 // cleanup queue
 void message_queue_cleanup(message_queue* queue);

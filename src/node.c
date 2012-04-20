@@ -33,8 +33,7 @@ node_node* node_create(node_id id, node_process_size size) {
     }
 
     for (node_process_size i = 0; i < size; i++) {
-        message_queue_init(&(node->process_message_queues[i]),
-            dispatch_queue_create("de.rub.est.actor", NULL));
+        message_queue_init(&(node->process_message_queues[i]));
         node->message_queue_usage[i] = false;
     }
 
@@ -69,7 +68,8 @@ process_process* node_start_process(node_node* node, process_process_function fu
     }
 
     // create dispatch queue
-    process->dispatch_queue = dispatch_queue_create("de.rub.est.actor", NULL);
+    process->dispatch_queue = dispatch_get_global_queue(
+        DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
     // check for success
     if (process->dispatch_queue == NULL) {
@@ -77,7 +77,7 @@ process_process* node_start_process(node_node* node, process_process_function fu
     }
 
     // save attributes
-    process->queue = queue;
+    process->message_queue = queue;
     process->pid = id;
     process->node = node;
 
@@ -100,9 +100,8 @@ process_process* node_start_process(node_node* node, process_process_function fu
                 // call process kernel
                 function(process);
 
-                // TODO
                 // cleanup process
-                // process_cleanup(process);
+                process_cleanup(process);
             });
     }
 

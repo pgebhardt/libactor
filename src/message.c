@@ -47,28 +47,30 @@ void message_message_release(message_message* message) {
 }
 
 // create new queue
-message_queue* message_queue_create(dispatch_queue_t dispatch_queue) {
+message_queue* message_queue_create() {
     // create new message struct
     message_queue* queue = malloc(sizeof(message_queue));
 
     // init queue
-    message_queue_init(queue, dispatch_queue);
+    message_queue_init(queue);
 
     return queue;
 }
 
 // create new queue
-message_queue* message_queue_init(message_queue* queue,
-    dispatch_queue_t dispatch_queue) {
+message_queue* message_queue_init(message_queue* queue) {
     // check for valid queue
-    if ((queue == NULL) || (dispatch_queue == NULL)) {
+    if (queue == NULL) {
         return NULL;
     }
 
     // init parameter
     queue->first = NULL;
     queue->last = NULL;
-    queue->dispatch_queue = dispatch_queue;
+
+    // create semaphores
+    queue->semaphore_read_write = dispatch_semaphore_create(1);
+    queue->semaphore_messages = dispatch_semaphore_create(0);
 
     return queue;
 }
@@ -98,9 +100,9 @@ void message_queue_cleanup(message_queue* queue) {
         message = next;
     }
 
-    // release dispatch queue
-    dispatch_release(queue->dispatch_queue);
-    queue->dispatch_queue = NULL;
+    // release semaphores
+    dispatch_release(queue->semaphore_read_write);
+    dispatch_release(queue->semaphore_messages);
 }
 
 void message_queue_release(message_queue* queue) {
@@ -123,21 +125,27 @@ void message_queue_put(message_queue* queue, message_message* message) {
         return;
     }
 
-    // dispatch write
-    dispatch_async(queue->dispatch_queue, ^ {
-            // check if first message is NULL
-            if (queue->first == NULL) {
-                // set new message as first and last
-                queue->first = message;
-                queue->last = message;
-                message->next = NULL;
-            }
-            else {
-                // set new message as last
-                queue->last->next = (struct message_message*)message;
-                queue->last = message;
-            }
-        });
+    // get write access
+    dispatch_semaphore_wait(queue->semaphore_read_write, DISPATCH_TIME_FOREVER);
+
+    // check if first message is NULL
+    if (queue->first == NULL) {
+        // set new message as first and last
+        queue->first = message;
+        queue->last = message;
+        message->next = NULL;
+    }
+    else {
+        // set new message as last
+        queue->last->next = (struct message_message*)message;
+        queue->last = message;
+    }
+
+    // signal new message
+    dispatch_semaphore_signal(queue->semaphore_messages);
+
+    // signal read write access
+    dispatch_semaphore_signal(queue->semaphore_read_write);
 }
 
 // get message from queue
@@ -148,22 +156,12 @@ message_message* message_queue_get(message_queue* queue,
         return NULL;
     }
 
-    // convert timeout
-    message_queue_timeout t = (message_queue_timeout)(timeout * 1e6 / MESSAGE_MICROSECONDS_WAIT);
+    // TODO: correct timeout
+    // get message recource
+    dispatch_semaphore_wait(queue->semaphore_messages, DISPATCH_TIME_FOREVER);
 
-    // check for message
-    while (queue->first == NULL) {
-        // check current timeout
-        if (t == 0) {
-            return NULL;
-        }
-
-        // sleep a bit
-        usleep(MESSAGE_MICROSECONDS_WAIT);
-
-        // decement timeout
-        t -= 1;
-    }
+    // get read acces
+    dispatch_semaphore_wait(queue->semaphore_read_write, DISPATCH_TIME_FOREVER);
 
     // get message
     message_message* message = queue->first;
@@ -175,6 +173,9 @@ message_message* message_queue_get(message_queue* queue,
     if (queue->first == NULL) {
         queue->last = NULL;
     }
+
+    // signal read write access
+    dispatch_semaphore_signal(queue->semaphore_read_write);
 
     // set next element of message to NULL
     message->next = NULL;
