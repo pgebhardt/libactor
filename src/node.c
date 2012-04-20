@@ -59,8 +59,8 @@ actor_process_t actor_node_start_process(actor_node_t node,
         return NULL;
     }
 
-    // create process struct
-    __block actor_process_t process = malloc(sizeof(actor_process_struct));
+    // create process
+    __block actor_process_t process = actor_process_create(id, node, queue);
 
     // check for success
     if (process == NULL) {
@@ -68,22 +68,17 @@ actor_process_t actor_node_start_process(actor_node_t node,
     }
 
     // create dispatch queue
-    process->dispatch_queue = dispatch_get_global_queue(
+    dispatch_queue_t dispatch_queue = dispatch_get_global_queue(
         DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 
     // check for success
-    if (process->dispatch_queue == NULL) {
+    if (dispatch_queue == NULL) {
         return NULL;
     }
 
-    // save attributes
-    process->message_queue = queue;
-    process->pid = id;
-    process->node = node;
-
     // call process function
     if (blocking == true) {
-        dispatch_sync(process->dispatch_queue, ^ {
+        dispatch_sync(dispatch_queue, ^ {
                 // call process kernel
                 function(process);
             });
@@ -96,7 +91,7 @@ actor_process_t actor_node_start_process(actor_node_t node,
 
     }
     else {
-        dispatch_async(process->dispatch_queue, ^ {
+        dispatch_async(dispatch_queue, ^ {
                 // call process kernel
                 function(process);
 
