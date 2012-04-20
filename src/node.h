@@ -4,11 +4,11 @@
 #include <dispatch/dispatch.h>
 #include "message.h"
 
+// size
+typedef unsigned int actor_size_t;
+
 // node id
 typedef unsigned int actor_node_id_t;
-
-// process size
-typedef unsigned int actor_node_process_size_t;
 
 // message queue usage
 typedef bool actor_node_message_queue_usage_t;
@@ -16,16 +16,16 @@ typedef bool actor_node_message_queue_usage_t;
 // node struct
 typedef struct {
     actor_node_id_t nid;
-    actor_message_queue_t process_message_queues;
+    actor_message_queue_t message_queues;
+    actor_size_t message_queue_count;
+    actor_size_t message_queue_pos;
     actor_node_message_queue_usage_t* message_queue_usage;
-    actor_node_process_size_t process_size;
-    actor_node_process_size_t process_pos;
     dispatch_semaphore_t process_semaphore;
 } actor_node_struct;
 typedef actor_node_struct* actor_node_t;
 
 // create node
-actor_node_t actor_node_create(actor_node_id_t id, actor_node_process_size_t size);
+actor_node_t actor_node_create(actor_node_id_t id, actor_size_t size);
 
 // include process here, to make shure node struct is defined
 #include "process.h"

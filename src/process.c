@@ -44,7 +44,7 @@ actor_message_t actor_message_send(actor_process_t process,
     }
 
     // check for correct dest_id
-    if (dest_id >= process->node->process_size) {
+    if (dest_id >= process->node->message_queue_count) {
         return NULL;
     }
 

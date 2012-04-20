@@ -3,7 +3,7 @@
 #include "node.h"
 
 // create node
-actor_node_t actor_node_create(actor_node_id_t id, actor_node_process_size_t size) {
+actor_node_t actor_node_create(actor_node_id_t id, actor_size_t size) {
     // create process semaphore
     dispatch_semaphore_t process_semaphore = dispatch_semaphore_create(0);
 
@@ -13,11 +13,11 @@ actor_node_t actor_node_create(actor_node_id_t id, actor_node_process_size_t siz
     }
 
     // create process message queues
-    actor_message_queue_t process_message_queues = malloc(
+    actor_message_queue_t message_queues = malloc(
         sizeof(actor_message_queue_struct) * size);
 
     // check success
-    if (process_message_queues == NULL) {
+    if (message_queues == NULL) {
         // cleanup
         dispatch_release(process_semaphore);
 
@@ -32,7 +32,7 @@ actor_node_t actor_node_create(actor_node_id_t id, actor_node_process_size_t siz
     if (message_queue_usage == NULL) {
         // cleanup
         dispatch_release(process_semaphore);
-        free(process_message_queues);
+        free(message_queues);
 
         return NULL;
     }
@@ -44,7 +44,7 @@ actor_node_t actor_node_create(actor_node_id_t id, actor_node_process_size_t siz
     if (node == NULL) {
         // cleanup
         dispatch_release(process_semaphore);
-        free(process_message_queues);
+        free(message_queues);
         free(message_queue_usage);
 
         return NULL;
@@ -52,15 +52,15 @@ actor_node_t actor_node_create(actor_node_id_t id, actor_node_process_size_t siz
 
     // init
     node->process_semaphore = process_semaphore;
-    node->process_message_queues = process_message_queues;
+    node->message_queues = message_queues;
     node->message_queue_usage = message_queue_usage;
     node->nid = id;
-    node->process_size = size;
-    node->process_pos = 0;
+    node->message_queue_count = size;
+    node->message_queue_pos = 0;
 
     // init message queues
-    for (actor_node_process_size_t i = 0; i < size; i++) {
-        actor_message_queue_init(&(node->process_message_queues[i]));
+    for (actor_size_t i = 0; i < size; i++) {
+        actor_message_queue_init(&(node->message_queues[i]));
         node->message_queue_usage[i] = false;
     }
 
@@ -135,12 +135,13 @@ actor_message_queue_t actor_node_message_queue_get_free(actor_node_t node,
     }
 
     // get possible id
-    actor_process_id_t id = node->process_pos;
+    actor_process_id_t id = node->message_queue_pos;
 
     // check for correct id
-    if ((id >= node->process_size) || (node->message_queue_usage[id] == true)) {
+    if ((id >= node->message_queue_count) ||
+            (node->message_queue_usage[id] == true)) {
         // look for first free queue
-        for (actor_node_process_size_t i = 0; i < node->process_size; i++) {
+        for (actor_size_t i = 0; i < node->message_queue_count; i++) {
             // check for used queue
             if (node->message_queue_usage[i] == false) {
                 // set new id
@@ -151,26 +152,26 @@ actor_message_queue_t actor_node_message_queue_get_free(actor_node_t node,
         }
 
         // check new id
-        if (id >= node->process_size) {
+        if (id >= node->message_queue_pos) {
             return NULL;
         }
 
         // set new id
         *pid = id;
-        node->process_pos = id + 1;
+        node->message_queue_pos = id + 1;
     }
     else {
         // set id
-        *pid = node->process_pos;
+        *pid = node->message_queue_pos;
 
         // increment count
-        node->process_pos++;
+        node->message_queue_pos++;
     }
 
     // mark queue as used
     node->message_queue_usage[*pid] = true;
 
-    return &(node->process_message_queues[*pid]);
+    return &(node->message_queues[*pid]);
 }
 
 // get message queue for id
@@ -182,17 +183,17 @@ actor_message_queue_t actor_node_message_queue_get(actor_node_t node,
     }
 
     // check for correct pid
-    if (pid >= node->process_size) {
+    if (pid >= node->message_queue_count) {
         return NULL;
     }
 
-    return &node->process_message_queues[pid];
+    return &node->message_queues[pid];
 }
 
 // release message queue
 void actor_node_message_queue_release(actor_node_t node, actor_process_id_t pid) {
     // check for correct pid
-    if (pid >= node->process_size) {
+    if (pid >= node->message_queue_count) {
         return;
     }
 
@@ -211,12 +212,12 @@ void actor_node_cleanup(actor_node_t node) {
     dispatch_semaphore_wait(node->process_semaphore, DISPATCH_TIME_FOREVER);
 
     // cleanup message queues
-    for (actor_node_process_size_t i = 0; i < node->process_size; i++) {
-        actor_message_queue_cleanup(&(node->process_message_queues[i]));
+    for (actor_size_t i = 0; i < node->message_queue_count; i++) {
+        actor_message_queue_cleanup(&(node->message_queues[i]));
     }
 
     // free message queues
-    free(node->process_message_queues);
+    free(node->message_queues);
 
     // free queue usage
     free(node->message_queue_usage);
