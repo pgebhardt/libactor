@@ -14,8 +14,8 @@ actor_message_t actor_message_create(void* const data,
     memcpy(dataCopy, data, sizeof(char) * size);
 
     // save data
-    message->message_data = dataCopy;
-    message->message_size = size;
+    message->data = dataCopy;
+    message->size = size;
 
     // set next to NULL
     message->next = NULL;
@@ -30,7 +30,7 @@ void actor_message_cleanup(actor_message_t message) {
         return;
     }
 
-    free(message->message_data);
+    free(message->data);
 }
 
 void actor_message_release(actor_message_t message) {

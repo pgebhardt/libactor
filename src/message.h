@@ -9,8 +9,8 @@ typedef unsigned int actor_message_size_t;
 // message struct
 typedef struct {
     struct actor_message_struct* next;
-    actor_message_size_t message_size;
-    void* message_data;
+    actor_message_size_t size;
+    void* data;
 } actor_message_struct;
 typedef actor_message_struct* actor_message_t;
 
