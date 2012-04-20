@@ -6,7 +6,7 @@
 #include "process.h"
 
 // reducer
-void reduce(process_process* self, process_id parent, double* list, int size) {
+void reduce(actor_process_t self, actor_process_id_t parent, double* list, int size) {
     double result = 0.0;
 
     // check length of list
@@ -22,20 +22,20 @@ void reduce(process_process* self, process_id parent, double* list, int size) {
         int split = (size / sizeof(double)) / 2;
 
         // spawn reducer
-        process_id pid1 = node_process_spawn(self->node,
-            ^(process_process* s) {
+        actor_process_id_t pid1 = actor_process_spawn(self->node,
+            ^(actor_process_t s) {
                 reduce(s, self->pid, list, split * sizeof(double));
         });
 
-        process_id pid2 = node_process_spawn(self->node,
-            ^(process_process* s) {
+        actor_process_id_t pid2 = actor_process_spawn(self->node,
+            ^(actor_process_t s) {
                 reduce(s, self->pid, &(list[split]),
                     size - (split * sizeof(double)));
         });
 
         // gather results
-        message_message* result1 = process_message_receive(self, 5.0f);
-        message_message* result2 = process_message_receive(self, 5.0f);
+        actor_message_t result1 = actor_message_receive(self, 5.0f);
+        actor_message_t result2 = actor_message_receive(self, 5.0f);
 
         // check for success
         if ((result1 == NULL) || (result2 == NULL)) {
@@ -48,18 +48,18 @@ void reduce(process_process* self, process_id parent, double* list, int size) {
             *(double*)result2->message_data;
 
         // cleanup messages
-        message_message_release(result1);
-        message_message_release(result2);
+        actor_message_release(result1);
+        actor_message_release(result2);
     }
 
     // send result to parent
-    process_message_send(self, parent,
-        message_message_create(&result, sizeof(double)));
+    actor_message_send(self, parent,
+        actor_message_create(&result, sizeof(double)));
 }
 
-void main_process(process_process* self) {
+void main_process(actor_process_t self) {
     // data
-    int size = 1000;
+    int size = 100;
     double* list = malloc(size * sizeof(double));
 
     for (int i = 0; i < size; i++) {
@@ -67,12 +67,12 @@ void main_process(process_process* self) {
     }
 
     // start first reducer
-    process_id reducer = node_process_spawn(self->node, ^(process_process* s) {
+    actor_process_id_t reducer = actor_process_spawn(self->node, ^(actor_process_t s) {
             reduce(s, self->pid, list, size * sizeof(double));
         });
 
     // get result
-    message_message* result = process_message_receive(self, 5.0f);
+    actor_message_t result = actor_message_receive(self, 5.0);
 
     // print result
     if (result != NULL) {
@@ -87,15 +87,15 @@ void main_process(process_process* self) {
 
 int main(int argc, char* argv[]) {
     // create node
-    node_node* node = node_create(0, 100);
+    actor_node_t node = actor_node_create(0, 50);
 
     // spawn main process
-    node_main_process(node, ^(process_process* self) {
+    actor_main_process(node, ^(actor_process_t self) {
             main_process(self);
         });
 
     // cleanup
-    node_release(node);
+    actor_node_release(node);
 
     return 0;
 }
