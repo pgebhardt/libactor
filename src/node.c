@@ -119,6 +119,11 @@ actor_process_id_t actor_process_spawn(actor_node_t node,
     // start non blocking process
     actor_process_t process = actor_node_start_process(node, function, false);
 
+    // check for success
+    if (process == NULL) {
+        return -1;
+    }
+
     return process->pid;
 }
 
