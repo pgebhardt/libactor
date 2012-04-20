@@ -5,19 +5,19 @@
 #include "message.h"
 #include "process.h"
 
-void main_process(process_process* self) {
+void main_process(actor_process_t self) {
     // process id memory
-    int processes = 100;
-    process_id* pids = malloc(processes * sizeof(process_id));
+    int processes = 1000;
+    actor_process_id_t* pids = malloc(processes * sizeof(actor_process_id_t));
 
     // process function
-    process_process_function function = ^(process_process* s) {
+    actor_process_function_t function = ^(actor_process_t s) {
         printf("I'm procces %d!\n", s->pid);
     };
 
     // create processes
     for (int i = 0; i < processes; i++) {
-        node_process_spawn(self->node, function);
+        actor_process_spawn(self->node, function);
     }
 
     // wait
@@ -26,7 +26,7 @@ void main_process(process_process* self) {
 
 int main(int argc, char* argv[]) {
     // create node
-    node_node* node = node_create(0, 10000);
+    actor_node_t node = actor_node_create(0, 10000);
 
     // time variables
     clock_t start, end;
@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
     start = clock();
 
     // start main process
-    node_main_process(node, ^(process_process* self) {
+    actor_main_process(node, ^(actor_process_t self) {
             main_process(self);
         });
 
@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
     printf("Execution Time: %f milliseconds\n", (double)(end - start) * 1000.0 / CLOCKS_PER_SEC);
 
     // cleanup
-    node_release(node);
+    actor_node_release(node);
 
     return 0;
 }

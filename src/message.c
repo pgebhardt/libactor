@@ -156,9 +156,15 @@ actor_message_t actor_message_queue_get(actor_message_queue_t queue,
         return NULL;
     }
 
-    // TODO: correct timeout
     // get message recource
-    dispatch_semaphore_wait(queue->semaphore_messages, DISPATCH_TIME_FOREVER);
+    // TODO: timeout
+    long err = dispatch_semaphore_wait(queue->semaphore_messages,
+        DISPATCH_TIME_FOREVER);
+
+    // check for timeout
+    if (err != 0) {
+        return NULL;
+    }
 
     // get read acces
     dispatch_semaphore_wait(queue->semaphore_read_write, DISPATCH_TIME_FOREVER);

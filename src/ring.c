@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <dispatch/dispatch.h>
+#include <mach/mach_time.h>
 #include "node.h"
 #include "message.h"
 #include "process.h"
@@ -13,33 +14,33 @@
 typedef unsigned int ring_command;
 
 typedef struct {
-    process_id sender;
+    actor_process_id_t sender;
     ring_command command;
-    process_id listener;
+    actor_process_id_t listener;
 } ring_message;
 
-void main_process(process_process* main) {
+void main_process(actor_process_t main) {
     // circles
-    int circles = 100;
-    int processes = 200;
+    int circles = 10;
+    int processes = 10;
 
     // parent pid
-    process_id parent = main->pid;
+    actor_process_id_t parent = main->pid;
 
     // process function
-    process_process_function function = ^(process_process* self) {
+    actor_process_function_t function = ^(actor_process_t self) {
             ring_message answer;
 
             // memory for round
             int round = circles;
 
             // listener
-            process_id listener = main->pid;
+            actor_process_id_t listener = main->pid;
 
             // main loop
             while (round >= 0) {
                 // receive message
-                message_message* message = process_message_receive(self, 10.0);
+                actor_message_t message = actor_message_receive(self, 10.0);
 
                 if (message == NULL) {
                     break;
@@ -55,29 +56,29 @@ void main_process(process_process* main) {
                     printf("Process: %d, bechmark, round %d\n", self->pid, round);
                     answer.sender = self->pid;
                     answer.command = RING_COMMAND_BENCHMARK;
-                    process_message_send(self, listener, message_message_create(&answer,
+                    actor_message_send(self, listener, actor_message_create(&answer,
                         sizeof(ring_message)));
 
                     round -= 1;
                 }
 
                 // release message
-                message_message_release(message);
+                actor_message_release(message);
             }
 
             // send message to main process
             answer.command = RING_COMMAND_FINISHED;
             answer.sender = self->pid;
-            process_message_send(self, parent,
-                message_message_create(&answer, sizeof(ring_message)));
+            actor_message_send(self, parent,
+                actor_message_create(&answer, sizeof(ring_message)));
 
         };
 
     // start processes
-    process_id *pids = malloc(processes * sizeof(process_id));
+    actor_process_id_t* pids = malloc(processes * sizeof(actor_process_id_t));
 
     for (int i = 0; i < processes; i++) {
-        pids[i] = node_process_spawn(main->node, function);
+        pids[i] = actor_process_spawn(main->node, function);
     }
 
     // set listener
@@ -87,19 +88,19 @@ void main_process(process_process* main) {
 
     for (int i = 0; i < processes - 1; i++) {
         c.listener = pids[i + 1];
-        process_message_send(main, pids[i], message_message_create(&c, sizeof(ring_message)));
+        actor_message_send(main, pids[i], actor_message_create(&c, sizeof(ring_message)));
     }
 
     // close ring
     c.listener = pids[0];
-    process_message_send(main, pids[processes - 1], message_message_create(&c, sizeof(ring_message)));
+    actor_message_send(main, pids[processes - 1], actor_message_create(&c, sizeof(ring_message)));
 
     // start benchmark
     c.command = RING_COMMAND_BENCHMARK;
-    process_message_send(main, pids[0], message_message_create(&c, sizeof(ring_message)));
+    actor_message_send(main, pids[0], actor_message_create(&c, sizeof(ring_message)));
 
     // wait for and of benchmark
-    message_message* response = process_message_receive(main, 10.0);
+    actor_message_t response = actor_message_receive(main, 10.0);
 
     if (response == NULL) {
         return;
@@ -107,34 +108,50 @@ void main_process(process_process* main) {
 
     printf("Fertig\n");
 
-    message_message_release(response);
+    actor_message_release(response);
     free(pids);
+}
+
+double mach_elapsed_time(double start, double endTime)
+{
+    uint64_t diff = endTime - start;
+    static double conversion = 0.0;
+
+    if (conversion == 0.0) {
+        mach_timebase_info_data_t info;
+        kern_return_t err = mach_timebase_info(&info);
+
+        if (err == 0)
+            conversion = 1e-9 * (double) info.numer / (double) info.denom;
+    }
+
+    return conversion * (double) diff;
 }
 
 int main(int argc, char* argv[]) {
     // create node
-    node_node* node = node_create(0, 1000);
+    actor_node_t node = actor_node_create(0, 1000);
 
     // time variables
-    dispatch_time_t start, end;
+    uint64_t start, end;
 
     // get start time
-    start = dispatch_walltime(NULL, 0);
+    start = mach_absolute_time();
 
     // start main process
-    node_main_process(node, ^(process_process* self) {
+    actor_main_process(node, ^(actor_process_t self) {
             main_process(self);
         });
 
     // get end time
-    end = dispatch_walltime(NULL, 0);
+    end = mach_absolute_time();
 
     // print execution time
-    printf("Execution Time: %f milliseconds\n", (double)(end - start) / 1e9);
+    printf("Execution Time: %f milliseconds\n", mach_elapsed_time(start, end) * 1000.0);
 
     // cleanup
     sleep(1);
-    node_release(node);
+    actor_node_release(node);
 
     return 0;
 }

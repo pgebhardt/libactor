@@ -7,13 +7,24 @@
 #include "process.h"
 
 void main_process(actor_process_t main) {
-    int size = 100;
+    int size = 1000;
 
     // process function
     actor_process_function_t function = ^(actor_process_t self) {
-            printf("Ich bin Prozess %d!\n", self->pid);
-            actor_message_send(self, main->pid,
-                actor_message_create("Hallo", 6));
+            // wait for incomming message
+            actor_message_t message = actor_message_receive(self, 1e4);
+
+            // check for timeout
+            if (message == NULL) {
+                printf("%d timeout!\n", self->pid);
+                return;
+            }
+
+            // print message
+            printf("%d, ", self->pid);
+
+            // release message
+            actor_message_release(message);
         };
 
     // start dummy process
@@ -21,17 +32,16 @@ void main_process(actor_process_t main) {
         actor_process_spawn(main->node, function);
     }
 
-    // receive messages
+    sleep(2);
+
+    // send messages
     for (int i = 0; i < size; i++) {
-        // receive message
-        actor_message_t message = actor_message_receive(main, 10.0);
-
-        // output message
-        printf("%s\n", (char*)message->message_data);
-
-        // release message
-        actor_message_release(message);
+        // send message
+        actor_message_send(main, main->pid + i + 1,
+            actor_message_create("Hallo", 6));
     }
+
+    sleep(2);
 }
 
 int main(int argc, char* argv[]) {
