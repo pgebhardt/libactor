@@ -6,43 +6,23 @@
 #include "node.h"
 #include "process.h"
 
-void main_process(actor_process_t main) {
-    int size = 10;
+void main_process(actor_process_t self) {
+    printf("Begin!\n");
 
-    // process function
-    actor_process_function_t function = ^(actor_process_t self) {
-            // wait for incomming message
-            actor_message_t message = actor_message_receive(self, 4.0);
+    // wait
+    actor_process_sleep(self, 2.0);
 
-            // check for timeout
-            if (message == NULL) {
-                printf("%d timeout!\n", self->pid);
-                return;
-            }
+    printf("After wait 1!\n");
 
-            // print message
-            printf("%d received %s!\n", self->pid, (char*)message->message_data);
+    actor_process_sleep(self, 2.0);
 
-            // release message
-            actor_message_release(message);
-        };
+    printf("After wait 2!\n");
 
-    // start dummy process
-    for (int i = 0; i < size; i++) {
-        actor_process_spawn(main->node, function);
-    }
-
-    // sleep a bit
-    actor_process_sleep(main, 2.0);
-
-    // send messages
-    for (int i = 0; i < size; i++) {
-        // send message
-        actor_message_send(main, main->pid + i + 1,
-            actor_message_create("Hallo", 6));
-    }
-
-    printf("Was gehtn?!\n");
+    actor_process_spawn(self->node, ^(actor_process_t s) {
+            // sleep a bit
+            actor_process_sleep(s, 2.0);
+            printf("Ende!\n");
+        });
 }
 
 int main(int argc, char* argv[]) {

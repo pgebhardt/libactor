@@ -88,7 +88,7 @@ void actor_process_sleep(actor_process_t process, double time) {
             (dispatch_time_t)(time * (double)NSEC_PER_SEC)));
 
     // signal semaphore
-    dispatch_semaphore_signal(process->sleep_semaphore);
+    // dispatch_semaphore_signal(process->sleep_semaphore);
 }
 
 // process cleanup
