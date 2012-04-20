@@ -5,7 +5,7 @@
 // create node
 actor_node_t actor_node_create(actor_node_id_t id, actor_node_process_size_t size) {
     // create process semaphore
-    dispatch_semaphore_t process_semaphore = dispatch_semaphore_create(1);
+    dispatch_semaphore_t process_semaphore = dispatch_semaphore_create(0);
 
     // check success
     if (process_semaphore == NULL) {
@@ -68,11 +68,11 @@ actor_node_t actor_node_create(actor_node_id_t id, actor_node_process_size_t siz
 }
 
 // start process
-actor_process_t actor_node_start_process(actor_node_t node,
-    actor_process_function_t function, bool blocking) {
+actor_process_id_t actor_process_spawn(actor_node_t node,
+    actor_process_function_t function) {
     // check for valid node
     if (node == NULL) {
-        return NULL;
+        return -1;
     }
 
     // get free message queue
@@ -81,7 +81,7 @@ actor_process_t actor_node_start_process(actor_node_t node,
 
     // check for valid queue
     if (queue == NULL) {
-        return NULL;
+        return -1;
     }
 
     // create process
@@ -89,7 +89,10 @@ actor_process_t actor_node_start_process(actor_node_t node,
 
     // check for success
     if (process == NULL) {
-        return NULL;
+        // cleanup
+        actor_node_message_queue_release(node, id);
+
+        return -1;
     }
 
     // create dispatch queue
@@ -98,72 +101,29 @@ actor_process_t actor_node_start_process(actor_node_t node,
 
     // check for success
     if (dispatch_queue == NULL) {
-        return NULL;
-    }
+        // cleanup
+        actor_process_release(process);
 
-    // call process function
-    if (blocking == true) {
-        dispatch_sync(dispatch_queue, ^ {
-                // call process kernel
-                function(process);
-            });
-
-        // cleanup process
-        actor_process_cleanup(process);
-
-        // set process pointer to NULL
-        process = NULL;
-
-    }
-    else {
-        // increment process counter
-        dispatch_semaphore_wait(node->process_semaphore,
-            DISPATCH_TIME_NOW);
-
-        // invoke new procces
-        dispatch_async(dispatch_queue, ^ {
-                // call process kernel
-                function(process);
-
-                // cleanup process
-                actor_process_cleanup(process);
-
-                // decrement process counter
-                dispatch_semaphore_signal(node->process_semaphore);
-            });
-    }
-
-    return process;
-}
-
-// spawn new process
-actor_process_id_t actor_process_spawn(actor_node_t node,
-    actor_process_function_t function) {
-    // check for valid node
-    if (node == NULL) {
         return -1;
     }
 
-    // start non blocking process
-    actor_process_t process = actor_node_start_process(node, function, false);
+    // increment process counter
+    dispatch_semaphore_wait(node->process_semaphore,
+        DISPATCH_TIME_NOW);
 
-    // check for success
-    if (process == NULL) {
-        return -1;
-    }
+    // invoke new procces
+    dispatch_async(dispatch_queue, ^ {
+            // call process kernel
+            function(process);
+
+            // cleanup process
+            actor_process_release(process);
+
+            // decrement process counter
+            dispatch_semaphore_signal(node->process_semaphore);
+        });
 
     return process->pid;
-}
-
-// start main process
-void actor_main_process(actor_node_t node, actor_process_function_t function) {
-    // check for valid node
-    if (node == NULL) {
-        return;
-    }
-
-    // start blocking process
-    actor_node_start_process(node, function, true);
 }
 
 // get free message queue

@@ -21,7 +21,7 @@ void main_process(actor_process_t main) {
             }
 
             // print message
-            printf("%d message!\n", self->pid);
+            printf("%d received %s!\n", self->pid, (char*)message->message_data);
 
             // release message
             actor_message_release(message);
@@ -32,6 +32,7 @@ void main_process(actor_process_t main) {
         actor_process_spawn(main->node, function);
     }
 
+    // sleep a bit
     actor_process_sleep(main, 2.0);
 
     // send messages
@@ -40,6 +41,8 @@ void main_process(actor_process_t main) {
         actor_message_send(main, main->pid + i + 1,
             actor_message_create("Hallo", 6));
     }
+
+    printf("Was gehtn?!\n");
 }
 
 int main(int argc, char* argv[]) {
@@ -47,7 +50,7 @@ int main(int argc, char* argv[]) {
     actor_node_t node = actor_node_create(0, 2000);
 
     // start main process
-    actor_main_process(node, ^(actor_process_t self) {
+    actor_process_spawn(node, ^(actor_process_t self) {
                 main_process(self);
             });
 

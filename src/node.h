@@ -30,16 +30,9 @@ actor_node_t actor_node_create(actor_node_id_t id, actor_node_process_size_t siz
 // include process here, to make shure node struct is defined
 #include "process.h"
 
-// start process
-actor_process_t actor_node_start_process(actor_node_t node,
-    actor_process_function_t function, bool blocking);
-
 // spawn new process
 actor_process_id_t actor_process_spawn(actor_node_t node,
     actor_process_function_t function);
-
-// start main process
-void actor_main_process(actor_node_t node, actor_process_function_t function);
 
 // get free message queue
 actor_message_queue_t actor_node_message_queue_get_free(
