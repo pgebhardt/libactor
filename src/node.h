@@ -1,6 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
 
+#include <dispatch/dispatch.h>
 #include "message.h"
 
 // node id
@@ -19,7 +20,7 @@ typedef struct {
     actor_node_message_queue_usage_t* message_queue_usage;
     actor_node_process_size_t process_size;
     actor_node_process_size_t process_pos;
-
+    dispatch_semaphore_t process_semaphore;
 } actor_node_struct;
 typedef actor_node_struct* actor_node_t;
 

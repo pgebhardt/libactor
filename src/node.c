@@ -4,40 +4,65 @@
 
 // create node
 actor_node_t actor_node_create(actor_node_id_t id, actor_node_process_size_t size) {
+    // create process semaphore
+    dispatch_semaphore_t process_semaphore = dispatch_semaphore_create(1);
+
+    // check success
+    if (process_semaphore == NULL) {
+        return NULL;
+    }
+
+    // create process message queues
+    actor_message_queue_t process_message_queues = malloc(
+        sizeof(actor_message_queue_struct) * size);
+
+    // check success
+    if (process_message_queues == NULL) {
+        // cleanup
+        dispatch_release(process_semaphore);
+
+        return NULL;
+    }
+
+    // create message queue usage array
+    actor_node_message_queue_usage_t* message_queue_usage = malloc(
+        sizeof(actor_node_message_queue_usage_t) * size);
+
+    // check success
+    if (message_queue_usage == NULL) {
+        // cleanup
+        dispatch_release(process_semaphore);
+        free(process_message_queues);
+
+        return NULL;
+    }
+
     // create node
     actor_node_t node = malloc(sizeof(actor_node_struct));
 
-    // check for success
+    // check success
     if (node == NULL) {
+        // cleanup
+        dispatch_release(process_semaphore);
+        free(process_message_queues);
+        free(message_queue_usage);
+
         return NULL;
     }
-
-    // set attributes
-    node->nid = id;
 
     // init
+    node->process_semaphore = process_semaphore;
+    node->process_message_queues = process_message_queues;
+    node->message_queue_usage = message_queue_usage;
+    node->nid = id;
     node->process_size = size;
-    node->process_message_queues = malloc(sizeof(actor_message_queue_struct) * size);
+    node->process_pos = 0;
 
-    // check for success
-    if (node->process_message_queues == NULL) {
-        return NULL;
-    }
-
-    // message queue usage
-    node->message_queue_usage = malloc(sizeof(actor_node_message_queue_usage_t) * size);
-
-    // check success
-    if (node->message_queue_usage == NULL) {
-        return NULL;
-    }
-
+    // init message queues
     for (actor_node_process_size_t i = 0; i < size; i++) {
         actor_message_queue_init(&(node->process_message_queues[i]));
         node->message_queue_usage[i] = false;
     }
-
-    node->process_pos = 0;
 
     return node;
 }
@@ -91,12 +116,20 @@ actor_process_t actor_node_start_process(actor_node_t node,
 
     }
     else {
+        // increment process counter
+        dispatch_semaphore_wait(node->process_semaphore,
+            DISPATCH_TIME_NOW);
+
+        // invoke new procces
         dispatch_async(dispatch_queue, ^ {
                 // call process kernel
                 function(process);
 
                 // cleanup process
                 actor_process_cleanup(process);
+
+                // decrement process counter
+                dispatch_semaphore_signal(node->process_semaphore);
             });
     }
 
@@ -214,6 +247,9 @@ void actor_node_cleanup(actor_node_t node) {
         return;
     }
 
+    // wait for processes to complete
+    dispatch_semaphore_wait(node->process_semaphore, DISPATCH_TIME_FOREVER);
+
     // cleanup message queues
     for (actor_node_process_size_t i = 0; i < node->process_size; i++) {
         actor_message_queue_cleanup(&(node->process_message_queues[i]));
@@ -224,6 +260,9 @@ void actor_node_cleanup(actor_node_t node) {
 
     // free queue usage
     free(node->message_queue_usage);
+
+    // release process semaphore
+    dispatch_release(node->process_semaphore);
 }
 
 void actor_node_release(actor_node_t node) {

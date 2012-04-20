@@ -12,7 +12,7 @@ void main_process(actor_process_t main) {
     // process function
     actor_process_function_t function = ^(actor_process_t self) {
             // wait for incomming message
-            actor_message_t message = actor_message_receive(self, 1.0);
+            actor_message_t message = actor_message_receive(self, 4.0);
 
             // check for timeout
             if (message == NULL) {
