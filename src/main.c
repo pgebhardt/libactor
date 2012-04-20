@@ -6,45 +6,45 @@
 #include "node.h"
 #include "process.h"
 
-void main_process(process_process* main) {
-    int size = 10;
+void main_process(actor_process_t main) {
+    int size = 100;
 
     // process function
-    process_process_function function = ^(process_process* self) {
+    actor_process_function_t function = ^(actor_process_t self) {
             printf("Ich bin Prozess %d!\n", self->pid);
-            process_message_send(self, main->pid,
-                message_message_create("Hallo", 6));
+            actor_message_send(self, main->pid,
+                actor_message_create("Hallo", 6));
         };
 
     // start dummy process
     for (int i = 0; i < size; i++) {
-        node_process_spawn(main->node, function);
+        actor_process_spawn(main->node, function);
     }
 
     // receive messages
     for (int i = 0; i < size; i++) {
         // receive message
-        message_message* message = process_message_receive(main, 10.0);
+        actor_message_t message = actor_message_receive(main, 10.0);
 
         // output message
         printf("%s\n", (char*)message->message_data);
 
         // release message
-        message_message_release(message);
+        actor_message_release(message);
     }
 }
 
 int main(int argc, char* argv[]) {
     // create node
-    node_node* node = node_create(0, 2000);
+    actor_node_t node = actor_node_create(0, 2000);
 
     // start main process
-    node_main_process(node, ^(process_process* self) {
+    actor_main_process(node, ^(actor_process_t self) {
                 main_process(self);
             });
 
     // release node
-    node_release(node);
+    actor_node_release(node);
 
     return 0;
 }

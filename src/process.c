@@ -3,8 +3,8 @@
 #include "process.h"
 
 // message sendig
-message_message* process_message_send(process_process* process, process_id dest_id,
-    message_message* message) {
+actor_message_t actor_message_send(actor_process_t process,
+    actor_process_id_t dest_id, actor_message_t message) {
     // check for valid process
     if (process == NULL) {
         return NULL;
@@ -16,7 +16,8 @@ message_message* process_message_send(process_process* process, process_id dest_
     }
 
     // get destination message queue
-    message_queue* dest_queue = node_message_queue_get(process->node, dest_id);
+    actor_message_queue_t dest_queue = actor_node_message_queue_get(process->node,
+        dest_id);
 
     // check for succes
     if (dest_queue == NULL) {
@@ -24,13 +25,13 @@ message_message* process_message_send(process_process* process, process_id dest_
     }
 
     // enqueue message
-    message_queue_put(dest_queue, message);
+    actor_message_queue_put(dest_queue, message);
 
     return message;
 }
 
 // message receive
-message_message* process_message_receive(process_process* process,
+actor_message_t actor_message_receive(actor_process_t process,
     double timeout) {
     // check for correct input
     if ((process == NULL) || (timeout < 0.0)) {
@@ -38,28 +39,28 @@ message_message* process_message_receive(process_process* process,
     }
 
     // get message
-    return message_queue_get(process->message_queue, timeout);
+    return actor_message_queue_get(process->message_queue, timeout);
 }
 
 // process cleanup
-void process_cleanup(process_process* process) {
+void actor_process_cleanup(actor_process_t process) {
     // check for valid process
     if (process == NULL) {
         return;
     }
 
     // release queue
-    node_message_queue_release(process->node, process->pid);
+    actor_node_message_queue_release(process->node, process->pid);
 }
 
-void process_release(process_process* process) {
+void actor_process_release(actor_process_t process) {
     // check for valid process
     if (process == NULL) {
         return;
     }
 
     // cleanup process
-    process_cleanup(process);
+    actor_process_cleanup(process);
 
     // free process memory
     free(process);

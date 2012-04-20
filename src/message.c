@@ -4,10 +4,10 @@
 #include "message.h"
 
 // create new message
-message_message* message_message_create(void* const data,
-    message_message_size size) {
+actor_message_t actor_message_create(void* const data,
+    actor_message_size_t size) {
     // create message
-    message_message* message = malloc(sizeof(message_message));
+    actor_message_t message = malloc(sizeof(actor_message_struct));
 
     // copy data
     void* dataCopy = malloc(sizeof(char) * size);
@@ -24,7 +24,7 @@ message_message* message_message_create(void* const data,
 }
 
 // cleanup message
-void message_message_cleanup(message_message* message) {
+void actor_message_cleanup(actor_message_t message) {
     // check for valid message
     if (message == NULL) {
         return;
@@ -33,32 +33,32 @@ void message_message_cleanup(message_message* message) {
     free(message->message_data);
 }
 
-void message_message_release(message_message* message) {
+void actor_message_release(actor_message_t message) {
     // check for valid message
     if (message == NULL) {
         return;
     }
 
     // cleanup message
-    message_message_cleanup(message);
+    actor_message_cleanup(message);
 
     // free memory
     free(message);
 }
 
 // create new queue
-message_queue* message_queue_create() {
+actor_message_queue_t message_queue_create() {
     // create new message struct
-    message_queue* queue = malloc(sizeof(message_queue));
+    actor_message_queue_t queue = malloc(sizeof(actor_message_queue_struct));
 
     // init queue
-    message_queue_init(queue);
+    actor_message_queue_init(queue);
 
     return queue;
 }
 
 // create new queue
-message_queue* message_queue_init(message_queue* queue) {
+actor_message_queue_t actor_message_queue_init(actor_message_queue_t queue) {
     // check for valid queue
     if (queue == NULL) {
         return NULL;
@@ -76,25 +76,25 @@ message_queue* message_queue_init(message_queue* queue) {
 }
 
 // cleanup
-void message_queue_cleanup(message_queue* queue) {
+void actor_message_queue_cleanup(actor_message_queue_t queue) {
     // check for valid queue
     if (queue == NULL) {
         return;
     }
 
     // get first message
-    message_message* message = queue->first;
+    actor_message_t message = queue->first;
 
     // pointer to next message
-    message_message* next = NULL;
+    actor_message_t next = NULL;
 
     // free all messages
     while (message != NULL) {
         // get next message
-        next = (message_message*)message->next;
+        next = (actor_message_t)message->next;
 
         // release message
-        message_message_release(message);
+        actor_message_release(message);
 
         // continue to next message
         message = next;
@@ -105,21 +105,21 @@ void message_queue_cleanup(message_queue* queue) {
     dispatch_release(queue->semaphore_messages);
 }
 
-void message_queue_release(message_queue* queue) {
+void actor_message_queue_release(actor_message_queue_t queue) {
     // check for valid queue
     if (queue == NULL) {
         return;
     }
 
     // cleanup queue
-    message_queue_cleanup(queue);
+    actor_message_queue_cleanup(queue);
 
     // free queue
     free(queue);
 }
 
 // add new message to queue
-void message_queue_put(message_queue* queue, message_message* message) {
+void actor_message_queue_put(actor_message_queue_t queue, actor_message_t message) {
     // check for correct input
     if ((queue == NULL) || (message == NULL)) {
         return;
@@ -137,7 +137,7 @@ void message_queue_put(message_queue* queue, message_message* message) {
     }
     else {
         // set new message as last
-        queue->last->next = (struct message_message*)message;
+        queue->last->next = (struct actor_message_struct*)message;
         queue->last = message;
     }
 
@@ -149,7 +149,7 @@ void message_queue_put(message_queue* queue, message_message* message) {
 }
 
 // get message from queue
-message_message* message_queue_get(message_queue* queue,
+actor_message_t actor_message_queue_get(actor_message_queue_t queue,
     double timeout) {
     // check for correct input
     if ((queue == NULL) || (timeout < 0.0)) {
@@ -164,10 +164,10 @@ message_message* message_queue_get(message_queue* queue,
     dispatch_semaphore_wait(queue->semaphore_read_write, DISPATCH_TIME_FOREVER);
 
     // get message
-    message_message* message = queue->first;
+    actor_message_t message = queue->first;
 
     // set new first message to next
-    queue->first = (message_message*)message->next;
+    queue->first = (actor_message_t)message->next;
 
     // if first is NULL set last to NULL
     if (queue->first == NULL) {

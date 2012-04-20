@@ -6,29 +6,30 @@
 #include "node.h"
 
 // Process Identifier
-typedef int process_id;
+typedef int actor_process_id_t;
 
 // Process struct
 typedef struct {
-    process_id pid;
-    message_queue* message_queue;
+    actor_process_id_t pid;
+    actor_message_queue_t message_queue;
     dispatch_queue_t dispatch_queue;
-    node_node* node;
-} process_process;
+    actor_node_t node;
+} actor_process_struct;
+typedef actor_process_struct* actor_process_t;
 
 // Process block signature
-typedef void (^process_process_function)(process_process* const self);
+typedef void (^actor_process_function_t)(actor_process_t const self);
 
 // message sending
-message_message* process_message_send(process_process* process, process_id dest_id,
-    message_message* message);
+actor_message_t actor_message_send(actor_process_t process,
+    actor_process_id_t dest_id, actor_message_t message);
 
 // message receive
-message_message* process_message_receive(process_process* process,
+actor_message_t actor_message_receive(actor_process_t process,
     double timeout);
 
 // process cleanup
-void process_cleanup(process_process* process);
-void process_release(process_process* process);
+void actor_process_cleanup(actor_process_t process);
+void actor_process_release(actor_process_t process);
 
 #endif
