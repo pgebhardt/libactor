@@ -11,6 +11,7 @@ typedef struct {
     actor_size_t message_queue_count;
     actor_size_t message_queue_pos;
     dispatch_semaphore_t process_semaphore;
+    actor_size_t process_count;
 } actor_node_struct;
 typedef actor_node_struct* actor_node_t;
 

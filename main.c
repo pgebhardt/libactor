@@ -55,8 +55,6 @@ int main(int argc, char* argv[]) {
                 main_process(self);
             });
 
-    sleep(10);
-
     // release node
     actor_node_release(node);
 

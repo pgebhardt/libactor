@@ -16,6 +16,7 @@ actor_node_t actor_node_create(actor_node_id_t id, actor_size_t size) {
     node->message_queue_count = size;
     node->message_queue_pos = 0;
     node->process_semaphore = NULL;
+    node->process_count = 0;
 
     // create message queues
     node->message_queues = malloc(sizeof(actor_message_queue_t) * size);
@@ -44,6 +45,9 @@ void actor_node_release(actor_node_t node) {
     if (node == NULL) {
         return;
     }
+
+    // wait for all processes to complete
+    dispatch_semaphore_wait(node->process_semaphore, DISPATCH_TIME_FOREVER);
 
     // release message queues
     if (node->message_queues != NULL) {
@@ -113,6 +117,10 @@ actor_message_queue_t actor_node_message_queue_get_free(actor_node_t node,
         return NULL;
     }
 
+    // increment process counter
+    node->process_count++;
+    dispatch_semaphore_wait(node->process_semaphore, DISPATCH_TIME_NOW);
+
     return node->message_queues[*pid];
 }
 
@@ -144,5 +152,13 @@ void actor_node_message_queue_release(actor_node_t node, actor_process_id_t pid)
 
     // set queue pointer to NULL
     node->message_queues[pid] = NULL;
+
+    // decrement process counter
+    node->process_count--;
+
+    // send signal if no process left
+    if (node->process_count == 0) {
+        dispatch_semaphore_signal(node->process_semaphore);
+    }
 }
 

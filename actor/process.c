@@ -1,10 +1,9 @@
 #include "actor.h"
 
 // create process
-actor_process_t actor_process_create(actor_process_id_t pid, actor_node_t node,
-    actor_message_queue_t message_queue) {
-    // check parameter
-    if ((pid < 0) || (node == NULL) || (message_queue == NULL)) {
+actor_process_t actor_process_create(actor_node_t node) {
+    // check valid node
+    if (node == NULL) {
         return NULL;
     }
 
@@ -17,8 +16,8 @@ actor_process_t actor_process_create(actor_process_id_t pid, actor_node_t node,
     }
 
     // init struct
-    process->pid = pid;
-    process->message_queue = message_queue;
+    process->pid = -1;
+    process->message_queue = NULL;
     process->sleep_semaphore = NULL;
     process->node = node;
 
@@ -27,6 +26,17 @@ actor_process_t actor_process_create(actor_process_id_t pid, actor_node_t node,
 
     // check for success
     if (process->sleep_semaphore == NULL) {
+        // release process
+        actor_process_release(process);
+
+        return NULL;
+    }
+
+    // get free message queue
+    process->message_queue = actor_node_message_queue_get_free(node, &process->pid);
+
+    // check success
+    if (process->message_queue == NULL) {
         // release process
         actor_process_release(process);
 
@@ -45,6 +55,11 @@ void actor_process_release(actor_process_t process) {
     // release sleep semaphore
     if (process->sleep_semaphore != NULL) {
         dispatch_release(process->sleep_semaphore);
+    }
+
+    // release message queue
+    if (process->message_queue != NULL) {
+        actor_node_message_queue_release(process->node, process->pid);
     }
 
     // free process memory
