@@ -27,28 +27,28 @@ void main_process(actor_process_t self) {
             });
 
     // send message
-    actor_message_send(self, pid, actor_message_create("Jo", 3));
+    actor_message_send(self, pid, actor_message_create("Jo1", 4));
+    actor_message_send(self, self->pid, actor_message_create("Jo2", 4));
 
     // receive message
-    actor_message_t response = actor_message_receive(self, 10.0);
+    actor_message_t message = NULL;
+    do {
+        // get message
+        message = actor_message_receive(self, 1.0);
 
-    // check success
-    if (response == NULL) {
-        return;
-    }
+        // print message
+        if (message != NULL) {
+            printf("%d: %s\n", self->pid, (char*)message->data);
+        }
 
-    // output message
-    printf("%d: %s\n", self->pid, (char*)response->data);
-
-    // release message
-    actor_message_release(response);
+        // release message
+        actor_message_release(message);
+    } while (message != NULL);
 }
 
 int main(int argc, char* argv[]) {
     // create node
     actor_node_t node = actor_node_create(0, 2000);
-
-    printf("%p\n", node);
 
     // start main process
     actor_process_spawn(node, ^(actor_process_t self) {

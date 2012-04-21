@@ -87,23 +87,15 @@ void actor_message_queue_release(actor_message_queue_t queue) {
         return;
     }
 
-    // get first message
-    actor_message_t message = queue->first;
-
-    // pointer to next message
-    actor_message_t next = NULL;
-
-    // free all messages
-    while (message != NULL) {
-        // get next message
-        next = (actor_message_t)message->next;
+    // release all messages
+    actor_message_t message = NULL;
+    do {
+        // get message
+        message = actor_message_queue_get(queue, 0.0);
 
         // release message
         actor_message_release(message);
-
-        // continue to next message
-        message = next;
-    }
+    } while (message != NULL);
 
     // release semaphores
     if (queue->semaphore_read_write != NULL) {

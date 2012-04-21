@@ -1,9 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include "node.h"
-#include "message.h"
-#include "process.h"
+#include "actor/actor.h"
 
 void main_process(actor_process_t self) {
     // process id memory
@@ -21,7 +19,7 @@ void main_process(actor_process_t self) {
     }
 
     // wait
-    sleep(2);
+    actor_process_sleep(self, 2.0);
 }
 
 int main(int argc, char* argv[]) {
@@ -35,7 +33,7 @@ int main(int argc, char* argv[]) {
     start = clock();
 
     // start main process
-    actor_main_process(node, ^(actor_process_t self) {
+    actor_process_spawn(node, ^(actor_process_t self) {
             main_process(self);
         });
 
