@@ -1,10 +1,9 @@
-#include <stdlib.h>
 #include <string.h>
-#include "message.h"
+#include "actor.h"
 
 // create new message
 actor_message_t actor_message_create(actor_message_data_t const data,
-    actor_message_size_t size) {
+    actor_size_t size) {
     // create message
     actor_message_t message = malloc(sizeof(actor_message_struct));
 

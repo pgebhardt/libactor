@@ -2,9 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "message.h"
-#include "node.h"
-#include "process.h"
+#include "actor/actor.h"
 
 void main_process(actor_process_t self) {
     // start second process

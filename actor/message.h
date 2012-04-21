@@ -1,18 +1,13 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
-#include <dispatch/dispatch.h>
-
-// message size
-typedef unsigned int actor_message_size_t;
-
 // message data
 typedef void* actor_message_data_t;
 
 // message struct
 typedef struct {
     struct actor_message_struct* next;
-    actor_message_size_t size;
+    actor_size_t size;
     actor_message_data_t data;
 } actor_message_struct;
 typedef actor_message_struct* actor_message_t;
@@ -28,7 +23,7 @@ typedef actor_message_queue_struct* actor_message_queue_t;
 
 // create new message
 actor_message_t actor_message_create(actor_message_data_t const data,
-    actor_message_size_t size);
+    actor_size_t size);
 
 // cleanup message
 void actor_message_release(actor_message_t message);
