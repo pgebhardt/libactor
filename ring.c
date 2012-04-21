@@ -1,11 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include <dispatch/dispatch.h>
 #include <mach/mach_time.h>
-#include "node.h"
-#include "message.h"
-#include "process.h"
+#include "actor/actor.h"
 
 #define RING_COMMAND_SET_LISTENER (1)
 #define RING_COMMAND_BENCHMARK (3)
@@ -46,7 +43,7 @@ void main_process(actor_process_t main) {
                     break;
                 }
 
-                ring_message* command = (ring_message*)message->message_data;
+                ring_message* command = (ring_message*)message->data;
 
                 // execute command
                 if (command->command == RING_COMMAND_SET_LISTENER) {
@@ -139,19 +136,18 @@ int main(int argc, char* argv[]) {
     start = mach_absolute_time();
 
     // start main process
-    actor_main_process(node, ^(actor_process_t self) {
+    actor_process_spawn(node, ^(actor_process_t self) {
             main_process(self);
         });
+
+    // cleanup
+    actor_node_release(node);
 
     // get end time
     end = mach_absolute_time();
 
     // print execution time
     printf("Execution Time: %f milliseconds\n", mach_elapsed_time(start, end) * 1000.0);
-
-    // cleanup
-    sleep(1);
-    actor_node_release(node);
 
     return 0;
 }
