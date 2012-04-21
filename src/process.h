@@ -24,6 +24,9 @@ typedef void (^actor_process_function_t)(actor_process_t const self);
 actor_process_t actor_process_create(actor_process_id_t pid, actor_node_t node,
     actor_message_queue_t message_queue);
 
+// process cleanup
+void actor_process_release(actor_process_t process);
+
 // message sending
 actor_message_t actor_message_send(actor_process_t process,
     actor_process_id_t dest_id, actor_message_t message);
@@ -34,9 +37,5 @@ actor_message_t actor_message_receive(actor_process_t process,
 
 // sleep
 void actor_process_sleep(actor_process_t process, double time);
-
-// process cleanup
-void actor_process_cleanup(actor_process_t process);
-void actor_process_release(actor_process_t process);
 
 #endif

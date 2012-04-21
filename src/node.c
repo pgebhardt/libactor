@@ -4,69 +4,66 @@
 
 // create node
 actor_node_t actor_node_create(actor_node_id_t id, actor_size_t size) {
-    // create process semaphore
-    dispatch_semaphore_t process_semaphore = dispatch_semaphore_create(0);
-
-    // check success
-    if (process_semaphore == NULL) {
-        return NULL;
-    }
-
-    // create process message queues
-    actor_message_queue_t message_queues = malloc(
-        sizeof(actor_message_queue_struct) * size);
-
-    // check success
-    if (message_queues == NULL) {
-        // cleanup
-        dispatch_release(process_semaphore);
-
-        return NULL;
-    }
-
-    // create message queue usage array
-    actor_node_message_queue_usage_t* message_queue_usage = malloc(
-        sizeof(actor_node_message_queue_usage_t) * size);
-
-    // check success
-    if (message_queue_usage == NULL) {
-        // cleanup
-        dispatch_release(process_semaphore);
-        free(message_queues);
-
-        return NULL;
-    }
-
     // create node
     actor_node_t node = malloc(sizeof(actor_node_struct));
 
     // check success
     if (node == NULL) {
-        // cleanup
-        dispatch_release(process_semaphore);
-        free(message_queues);
-        free(message_queue_usage);
+        return NULL;
+    }
+
+    // init struct
+    node->nid = id;
+    node->message_queues = NULL;
+    node->message_queue_count = size;
+    node->message_queue_pos = 0;
+    node->process_semaphore = NULL;
+
+    // create message queues
+    node->message_queues = malloc(sizeof(actor_message_queue_t) * size);
+
+    // check success
+    if (node->message_queues == NULL) {
+        // release node
+        actor_node_release(node);
 
         return NULL;
     }
 
-    // init
-    node->process_semaphore = process_semaphore;
-    node->message_queues = message_queues;
-    node->message_queue_usage = message_queue_usage;
-    node->nid = id;
-    node->message_queue_count = size;
-    node->message_queue_pos = 0;
+    // create process semaphore
+    node->process_semaphore = dispatch_semaphore_create(0);
 
-    // init message queues
-    for (actor_size_t i = 0; i < size; i++) {
-        actor_message_queue_init(&(node->message_queues[i]));
-        node->message_queue_usage[i] = false;
+    // check success
+    if (node->process_semaphore == NULL) {
+        return NULL;
     }
 
     return node;
 }
 
+void actor_node_release(actor_node_t node) {
+    // check for valid node
+    if (node == NULL) {
+        return;
+    }
+
+    // release message queues
+    if (node->message_queues != NULL) {
+        for (actor_size_t i = 0; i < node->message_queue_count; i++) {
+            actor_message_queue_release(node->message_queues[i]);
+        }
+
+        free(node->message_queues);
+    }
+
+    // release process semaphore
+    if (node->process_semaphore != NULL) {
+        dispatch_release(node->process_semaphore);
+    }
+
+    // free memory
+    free(node);
+}
 // start process
 actor_process_id_t actor_process_spawn(actor_node_t node,
     actor_process_function_t function) {
@@ -139,11 +136,11 @@ actor_message_queue_t actor_node_message_queue_get_free(actor_node_t node,
 
     // check for correct id
     if ((id >= node->message_queue_count) ||
-            (node->message_queue_usage[id] == true)) {
+            (node->message_queues[id] != NULL)) {
         // look for first free queue
         for (actor_size_t i = 0; i < node->message_queue_count; i++) {
             // check for used queue
-            if (node->message_queue_usage[i] == false) {
+            if (node->message_queues[i] == NULL) {
                 // set new id
                 id = i;
 
@@ -168,10 +165,15 @@ actor_message_queue_t actor_node_message_queue_get_free(actor_node_t node,
         node->message_queue_pos++;
     }
 
-    // mark queue as used
-    node->message_queue_usage[*pid] = true;
+    // create new message queue
+    node->message_queues[*pid] = actor_message_queue_create();
 
-    return &(node->message_queues[*pid]);
+    // check success
+    if (node->message_queues[*pid] == NULL) {
+        return NULL;
+    }
+
+    return node->message_queues[*pid];
 }
 
 // get message queue for id
@@ -187,7 +189,7 @@ actor_message_queue_t actor_node_message_queue_get(actor_node_t node,
         return NULL;
     }
 
-    return &node->message_queues[pid];
+    return node->message_queues[pid];
 }
 
 // release message queue
@@ -197,44 +199,10 @@ void actor_node_message_queue_release(actor_node_t node, actor_process_id_t pid)
         return;
     }
 
-    // set queue as unused
-    node->message_queue_usage[pid] = false;
+    // release message queue
+    actor_message_queue_release(node->message_queues[pid]);
+
+    // set queue pointer to NULL
+    node->message_queues[pid] = NULL;
 }
 
-// cleanup
-void actor_node_cleanup(actor_node_t node) {
-    // check for valid node
-    if (node == NULL) {
-        return;
-    }
-
-    // wait for processes to complete
-    dispatch_semaphore_wait(node->process_semaphore, DISPATCH_TIME_FOREVER);
-
-    // cleanup message queues
-    for (actor_size_t i = 0; i < node->message_queue_count; i++) {
-        actor_message_queue_cleanup(&(node->message_queues[i]));
-    }
-
-    // free message queues
-    free(node->message_queues);
-
-    // free queue usage
-    free(node->message_queue_usage);
-
-    // release process semaphore
-    dispatch_release(node->process_semaphore);
-}
-
-void actor_node_release(actor_node_t node) {
-    // check for valid node
-    if (node == NULL) {
-        return;
-    }
-
-    // cleanup node
-    actor_node_cleanup(node);
-
-    // free memory
-    free(node);
-}

@@ -1,36 +1,38 @@
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include "message.h"
 
 // create new message
-actor_message_t actor_message_create(void* const data,
+actor_message_t actor_message_create(actor_message_data_t const data,
     actor_message_size_t size) {
     // create message
     actor_message_t message = malloc(sizeof(actor_message_struct));
 
-    // copy data
-    void* dataCopy = malloc(sizeof(char) * size);
-    memcpy(dataCopy, data, sizeof(char) * size);
-
-    // save data
-    message->data = dataCopy;
-    message->size = size;
-
-    // set next to NULL
-    message->next = NULL;
-
-    return message;
-}
-
-// cleanup message
-void actor_message_cleanup(actor_message_t message) {
-    // check for valid message
+    // check success
     if (message == NULL) {
-        return;
+        return NULL;
     }
 
-    free(message->data);
+    // init struct
+    message->next = NULL;
+    message->size = size;
+    message->data = NULL;
+
+    // create message data memory
+    message->data = malloc(sizeof(char) * size);
+
+    // check success
+    if (message->data == NULL) {
+        // release message
+        actor_message_release(message);
+
+        return NULL;
+    }
+
+    // copy message data
+    memcpy(message->data, data, sizeof(char) * size);
+
+    return message;
 }
 
 void actor_message_release(actor_message_t message) {
@@ -39,32 +41,28 @@ void actor_message_release(actor_message_t message) {
         return;
     }
 
-    // cleanup message
-    actor_message_cleanup(message);
+    // free message data
+    if (message->data != NULL) {
+        free(message->data);
+    }
 
     // free memory
     free(message);
 }
 
 // create new queue
-actor_message_queue_t message_queue_create() {
+actor_message_queue_t actor_message_queue_create() {
     // create new message struct
     actor_message_queue_t queue = malloc(sizeof(actor_message_queue_struct));
 
-    // init queue
-    actor_message_queue_init(queue);
-
-    return queue;
-}
-
-// create new queue
-actor_message_queue_t actor_message_queue_init(actor_message_queue_t queue) {
-    // check for valid queue
+    // check success
     if (queue == NULL) {
         return NULL;
     }
 
-    // init parameter
+    // init struct
+    queue->semaphore_read_write = NULL;
+    queue->semaphore_messages = NULL;
     queue->first = NULL;
     queue->last = NULL;
 
@@ -72,11 +70,19 @@ actor_message_queue_t actor_message_queue_init(actor_message_queue_t queue) {
     queue->semaphore_read_write = dispatch_semaphore_create(1);
     queue->semaphore_messages = dispatch_semaphore_create(0);
 
+    // check success
+    if ((queue->semaphore_read_write == NULL) ||
+            (queue->semaphore_messages == NULL)) {
+        // release message queue
+        actor_message_queue_release(queue);
+
+        return NULL;
+    }
+
     return queue;
 }
 
-// cleanup
-void actor_message_queue_cleanup(actor_message_queue_t queue) {
+void actor_message_queue_release(actor_message_queue_t queue) {
     // check for valid queue
     if (queue == NULL) {
         return;
@@ -101,28 +107,24 @@ void actor_message_queue_cleanup(actor_message_queue_t queue) {
     }
 
     // release semaphores
-    dispatch_release(queue->semaphore_read_write);
-    dispatch_release(queue->semaphore_messages);
-}
-
-void actor_message_queue_release(actor_message_queue_t queue) {
-    // check for valid queue
-    if (queue == NULL) {
-        return;
+    if (queue->semaphore_read_write != NULL) {
+        dispatch_release(queue->semaphore_read_write);
     }
 
-    // cleanup queue
-    actor_message_queue_cleanup(queue);
+    if (queue->semaphore_messages != NULL) {
+        dispatch_release(queue->semaphore_messages);
+    }
 
     // free queue
     free(queue);
 }
 
 // add new message to queue
-void actor_message_queue_put(actor_message_queue_t queue, actor_message_t message) {
+actor_message_t actor_message_queue_put(actor_message_queue_t queue,
+    actor_message_t message) {
     // check for correct input
     if ((queue == NULL) || (message == NULL)) {
-        return;
+        return NULL;
     }
 
     // get write access
@@ -146,6 +148,9 @@ void actor_message_queue_put(actor_message_queue_t queue, actor_message_t messag
 
     // signal read write access
     dispatch_semaphore_signal(queue->semaphore_read_write);
+
+    // return message on success
+    return message;
 }
 
 // get message from queue
