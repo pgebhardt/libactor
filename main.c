@@ -22,13 +22,12 @@ void main_process(actor_process_t self) {
                 actor_message_release(request);
 
                 // send message
-                actor_message_send(s, self->pid,
-                    actor_message_create("Hallo", 6));
+                actor_message_send(s, self->pid, "Hallo", 6);
             });
 
     // send message
-    actor_message_send(self, pid, actor_message_create("Jo1", 4));
-    actor_message_send(self, self->pid, actor_message_create("Jo2", 4));
+    actor_message_send(self, pid, "Jo1", 4);
+    actor_message_send(self, self->pid, "Jo2", 4);
 
     // receive message
     actor_message_t message = NULL;

@@ -42,7 +42,8 @@ actor_process_id_t actor_process_spawn(actor_node_t node,
 
 // message sendig
 actor_message_t actor_message_send(actor_process_t process,
-    actor_process_id_t dest_id, actor_message_t message) {
+    actor_process_id_t dest_id, actor_message_data_t const data,
+    actor_size_t size) {
     // check for valid process
     if (process == NULL) {
         return NULL;
@@ -61,6 +62,9 @@ actor_message_t actor_message_send(actor_process_t process,
     if (dest_queue == NULL) {
         return NULL;
     }
+
+    // create message
+    actor_message_t message = actor_message_create(data, size);
 
     // enqueue message
     actor_message_queue_put(dest_queue, message);

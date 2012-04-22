@@ -20,7 +20,8 @@ actor_process_id_t actor_process_spawn(actor_node_t node,
 
 // message sending
 actor_message_t actor_message_send(actor_process_t process,
-    actor_process_id_t dest_id, actor_message_t message);
+    actor_process_id_t dest_id, actor_message_data_t const data,
+    actor_size_t size);
 
 // message receive
 actor_message_t actor_message_receive(actor_process_t process,

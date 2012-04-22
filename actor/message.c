@@ -18,7 +18,7 @@ actor_message_t actor_message_create(actor_message_data_t const data,
     message->data = NULL;
 
     // create message data memory
-    message->data = malloc(sizeof(char) * size);
+    message->data = malloc(size);
 
     // check success
     if (message->data == NULL) {
@@ -29,7 +29,7 @@ actor_message_t actor_message_create(actor_message_data_t const data,
     }
 
     // copy message data
-    memcpy(message->data, data, sizeof(char) * size);
+    memcpy(message->data, data, size);
 
     return message;
 }
