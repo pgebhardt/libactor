@@ -39,7 +39,6 @@ actor_message_t actor_message_queue_put(actor_message_queue_t queue,
     actor_message_t message);
 
 // get message from queue
-// TODO: timeout type
-actor_message_t actor_message_queue_get(actor_message_queue_t queue, double timeout);
+actor_message_t actor_message_queue_get(actor_message_queue_t queue, actor_time_t timeout);
 
 #endif

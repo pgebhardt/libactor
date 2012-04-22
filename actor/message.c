@@ -146,7 +146,7 @@ actor_message_t actor_message_queue_put(actor_message_queue_t queue,
 
 // get message from queue
 actor_message_t actor_message_queue_get(actor_message_queue_t queue,
-    double timeout) {
+    actor_time_t timeout) {
     // check for correct input
     if ((queue == NULL) || (timeout < 0.0)) {
         return NULL;
@@ -155,7 +155,7 @@ actor_message_t actor_message_queue_get(actor_message_queue_t queue,
     // get message recource
     long err = dispatch_semaphore_wait(queue->semaphore_messages,
         dispatch_time(DISPATCH_TIME_NOW,
-            (dispatch_time_t)(timeout * (double)NSEC_PER_SEC)));
+            (dispatch_time_t)(timeout * (actor_time_t)NSEC_PER_SEC)));
 
     // check for timeout
     if (err != 0) {

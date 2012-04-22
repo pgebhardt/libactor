@@ -9,6 +9,9 @@
 // size
 typedef unsigned int actor_size_t;
 
+// time
+typedef double actor_time_t;
+
 // actor includes
 #include "message.h"
 #include "node.h"
@@ -25,6 +28,6 @@ actor_message_t actor_message_send(actor_process_t process,
 
 // message receive
 actor_message_t actor_message_receive(actor_process_t process,
-    double timeout);
+    actor_time_t timeout);
 
 #endif

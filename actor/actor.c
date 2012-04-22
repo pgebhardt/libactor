@@ -18,7 +18,7 @@ actor_process_id_t actor_process_spawn(actor_node_t node,
 
     // get dispatch queue
     dispatch_queue_t dispatch_queue = dispatch_get_global_queue(
-        DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+        DISPATCH_QUEUE_PRIORITY_HIGH, 0);
 
     // check for success
     if (dispatch_queue == NULL) {
@@ -44,8 +44,8 @@ actor_process_id_t actor_process_spawn(actor_node_t node,
 actor_message_t actor_message_send(actor_process_t process,
     actor_process_id_t dest_id, actor_message_data_t const data,
     actor_size_t size) {
-    // check for valid process
-    if (process == NULL) {
+    // check input
+    if ((process == NULL) || (data == NULL)) {
         return NULL;
     }
 
@@ -66,15 +66,18 @@ actor_message_t actor_message_send(actor_process_t process,
     // create message
     actor_message_t message = actor_message_create(data, size);
 
-    // enqueue message
-    actor_message_queue_put(dest_queue, message);
+    // check success
+    if (message == NULL) {
+        return NULL;
+    }
 
-    return message;
+    // enqueue message
+    return actor_message_queue_put(dest_queue, message);
 }
 
 // message receive
 actor_message_t actor_message_receive(actor_process_t process,
-    double timeout) {
+    actor_time_t timeout) {
     // check for correct input
     if ((process == NULL) || (timeout < 0.0)) {
         return NULL;
