@@ -1,13 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "message.h"
-#include "node.h"
-#include "process.h"
+#include "actor/actor.h"
 
 // reducer
 void reduce(actor_process_t self, actor_process_id_t parent, double* list, int size) {
     double result = 0.0;
+    printf("Process %d started!\n", self->pid);
 
     // check length of list
     if (size == sizeof(double)) {
@@ -34,8 +33,8 @@ void reduce(actor_process_t self, actor_process_id_t parent, double* list, int s
         });
 
         // gather results
-        actor_message_t result1 = actor_message_receive(self, 5.0f);
-        actor_message_t result2 = actor_message_receive(self, 5.0f);
+        actor_message_t result1 = actor_message_receive(self, 5.0);
+        actor_message_t result2 = actor_message_receive(self, 5.0);
 
         // check for success
         if ((result1 == NULL) || (result2 == NULL)) {
@@ -44,8 +43,8 @@ void reduce(actor_process_t self, actor_process_id_t parent, double* list, int s
         }
 
         // reduce result
-        result = *(double*)result1->message_data +
-            *(double*)result2->message_data;
+        result = *(double*)result1->data +
+            *(double*)result2->data;
 
         // cleanup messages
         actor_message_release(result1);
@@ -53,13 +52,12 @@ void reduce(actor_process_t self, actor_process_id_t parent, double* list, int s
     }
 
     // send result to parent
-    actor_message_send(self, parent,
-        actor_message_create(&result, sizeof(double)));
+    actor_message_send(self, parent, &result, sizeof(double));
 }
 
 void main_process(actor_process_t self) {
     // data
-    int size = 100;
+    int size = 50;
     double* list = malloc(size * sizeof(double));
 
     for (int i = 0; i < size; i++) {
@@ -76,7 +74,7 @@ void main_process(actor_process_t self) {
 
     // print result
     if (result != NULL) {
-        printf("Result: %f\n", *(double*)result->message_data);
+        printf("Result: %f\n", *(double*)result->data);
     }
     else {
         printf("Invalid result!\n");
@@ -87,10 +85,10 @@ void main_process(actor_process_t self) {
 
 int main(int argc, char* argv[]) {
     // create node
-    actor_node_t node = actor_node_create(0, 50);
+    actor_node_t node = actor_node_create(0, 10000);
 
     // spawn main process
-    actor_main_process(node, ^(actor_process_t self) {
+    actor_process_spawn(node, ^(actor_process_t self) {
             main_process(self);
         });
 

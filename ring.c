@@ -18,7 +18,7 @@ typedef struct {
 
 void main_process(actor_process_t main) {
     // circles
-    int circles = 10;
+    int circles = 100;
     int processes = 10;
 
     // parent pid
@@ -53,8 +53,7 @@ void main_process(actor_process_t main) {
                     printf("Process: %d, bechmark, round %d\n", self->pid, round);
                     answer.sender = self->pid;
                     answer.command = RING_COMMAND_BENCHMARK;
-                    actor_message_send(self, listener, actor_message_create(&answer,
-                        sizeof(ring_message)));
+                    actor_message_send(self, listener, &answer, sizeof(ring_message));
 
                     round -= 1;
                 }
@@ -66,9 +65,7 @@ void main_process(actor_process_t main) {
             // send message to main process
             answer.command = RING_COMMAND_FINISHED;
             answer.sender = self->pid;
-            actor_message_send(self, parent,
-                actor_message_create(&answer, sizeof(ring_message)));
-
+            actor_message_send(self, parent, &answer, sizeof(ring_message));
         };
 
     // start processes
@@ -85,16 +82,16 @@ void main_process(actor_process_t main) {
 
     for (int i = 0; i < processes - 1; i++) {
         c.listener = pids[i + 1];
-        actor_message_send(main, pids[i], actor_message_create(&c, sizeof(ring_message)));
+        actor_message_send(main, pids[i], &c, sizeof(ring_message));
     }
 
     // close ring
     c.listener = pids[0];
-    actor_message_send(main, pids[processes - 1], actor_message_create(&c, sizeof(ring_message)));
+    actor_message_send(main, pids[processes - 1], &c, sizeof(ring_message));
 
     // start benchmark
     c.command = RING_COMMAND_BENCHMARK;
-    actor_message_send(main, pids[0], actor_message_create(&c, sizeof(ring_message)));
+    actor_message_send(main, pids[0], &c, sizeof(ring_message));
 
     // wait for and of benchmark
     actor_message_t response = actor_message_receive(main, 10.0);

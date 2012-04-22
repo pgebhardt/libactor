@@ -1,7 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
 #include "actor/actor.h"
 
 void main_process(actor_process_t self) {
