@@ -3,23 +3,43 @@
 #include <time.h>
 #include "actor/actor.h"
 
-void main_process(actor_process_t self) {
+void main_process(actor_process_t main) {
     // process id memory
-    int processes = 1000;
+    int processes = 10;
     actor_process_id_t* pids = malloc(processes * sizeof(actor_process_id_t));
 
     // process function
-    actor_process_function_t function = ^(actor_process_t s) {
-        printf("I'm procces %d!\n", s->pid);
-    };
+    actor_process_function_t function = ^(actor_process_t self) {
+            // send message to main
+            actor_message_send(self, main->pid, "Hallo main!", 12);
+        };
 
     // create processes
     for (int i = 0; i < processes; i++) {
-        actor_process_spawn(self->node, function);
+        actor_process_spawn(main->node, function);
+    }
+
+    // receive messages
+    actor_message_t message = NULL;
+    for (int i = 0; i < processes; i++) {
+        // get message
+        message = actor_message_receive(main, 1.0);
+
+        // output message
+        if (message != NULL) {
+            printf("%s\n", (char*)message->data);
+        }
+        else {
+            printf("Message not received!\n");
+        }
+
+        // release message
+        actor_message_release(message);
     }
 
     // wait
-    actor_process_sleep(self, 2.0);
+    actor_process_sleep(main, 2.0);
+    printf("After sleep!\n");
 }
 
 int main(int argc, char* argv[]) {
@@ -37,14 +57,14 @@ int main(int argc, char* argv[]) {
             main_process(self);
         });
 
+    // cleanup
+    actor_node_release(node);
+
     // get end time
     end = clock();
 
     // print execution time
     printf("Execution Time: %f milliseconds\n", (double)(end - start) * 1000.0 / CLOCKS_PER_SEC);
-
-    // cleanup
-    actor_node_release(node);
 
     return 0;
 }
