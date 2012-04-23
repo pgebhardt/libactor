@@ -16,6 +16,7 @@ actor_node_t actor_node_create(actor_node_id_t id, actor_size_t size) {
     node->message_queue_count = size;
     node->message_queue_pos = 0;
     node->process_semaphore = NULL;
+    node->message_queue_create_semaphore = NULL;
     node->process_count = 0;
 
     // create message queues
@@ -34,6 +35,14 @@ actor_node_t actor_node_create(actor_node_id_t id, actor_size_t size) {
 
     // check success
     if (node->process_semaphore == NULL) {
+        return NULL;
+    }
+
+    // create message queue create semaphore
+    node->message_queue_create_semaphore = dispatch_semaphore_create(1);
+
+    // check success
+    if (node->message_queue_create_semaphore == NULL) {
         return NULL;
     }
 
@@ -63,6 +72,11 @@ void actor_node_release(actor_node_t node) {
         dispatch_release(node->process_semaphore);
     }
 
+    // release message queue create semaphore
+    if (node->message_queue_create_semaphore != NULL) {
+        dispatch_release(node->message_queue_create_semaphore);
+    }
+
     // free memory
     free(node);
 }
@@ -74,6 +88,9 @@ actor_message_queue_t actor_node_message_queue_get_free(actor_node_t node,
     if ((node == NULL) || (pid == NULL)) {
         return NULL;
     }
+
+    // get message queue create access
+    dispatch_semaphore_wait(node->message_queue_create_semaphore, DISPATCH_TIME_FOREVER);
 
     // get possible id
     actor_process_id_t id = node->message_queue_pos;
@@ -120,6 +137,9 @@ actor_message_queue_t actor_node_message_queue_get_free(actor_node_t node,
     // increment process counter
     node->process_count++;
     dispatch_semaphore_wait(node->process_semaphore, DISPATCH_TIME_NOW);
+
+    // release message queue create access
+    dispatch_semaphore_signal(node->message_queue_create_semaphore);
 
     return node->message_queues[*pid];
 }
