@@ -2,3 +2,5 @@
 test
 *.o
 *.a
+client
+server
