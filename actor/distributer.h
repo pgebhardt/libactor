@@ -17,10 +17,10 @@ typedef struct {
 typedef actor_distributer_message_struct* actor_distributer_message_t;
 
 // connect to node
-actor_process_id_t actor_distributer_connect_to_node(actor_node_t node,
-    char* const host, unsigned int port);
+actor_node_id_t actor_distributer_connect_to_node(actor_node_t node,
+    char* const host_name, unsigned int port);
 
 // listen incomming connections
-actor_process_id_t actor_distributer_listen(actor_node_t node, unsigned int port);
+actor_node_id_t actor_distributer_listen(actor_node_t node, unsigned int port);
 
 #endif

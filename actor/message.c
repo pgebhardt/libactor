@@ -132,6 +132,7 @@ actor_message_t actor_message_queue_put(actor_message_queue_t queue,
         // set new message as last
         queue->last->next = (struct actor_message_struct*)message;
         queue->last = message;
+        message->next = NULL;
     }
 
     // signal new message

@@ -13,6 +13,7 @@ actor_node_t actor_node_create(actor_node_id_t id, actor_size_t size) {
     // init struct
     node->nid = id;
     node->message_queues = NULL;
+    node->remote_nodes = NULL;
     node->message_queue_count = size;
     node->message_queue_pos = 0;
     node->process_semaphore = NULL;
@@ -30,11 +31,30 @@ actor_node_t actor_node_create(actor_node_id_t id, actor_size_t size) {
         return NULL;
     }
 
+    // create remote node array
+    node->remote_nodes = malloc(sizeof(int) * 1024);
+
+    // check success
+    if (node->remote_nodes == NULL) {
+        // release node
+        actor_node_release(node);
+
+        return NULL;
+    }
+
+    // init array
+    for (actor_size_t i = 0; i < 1024; i++) {
+        node->remote_nodes[i] = -1;
+    }
+
     // create process semaphore
     node->process_semaphore = dispatch_semaphore_create(0);
 
     // check success
     if (node->process_semaphore == NULL) {
+        // release node
+        actor_node_release(node);
+
         return NULL;
     }
 
@@ -43,6 +63,9 @@ actor_node_t actor_node_create(actor_node_id_t id, actor_size_t size) {
 
     // check success
     if (node->message_queue_create_semaphore == NULL) {
+        // release node
+        actor_node_release(node);
+
         return NULL;
     }
 
@@ -65,6 +88,11 @@ void actor_node_release(actor_node_t node) {
         }
 
         free(node->message_queues);
+    }
+
+    // release remote node array
+    if (node->remote_nodes != NULL) {
+        free(node->remote_nodes);
     }
 
     // release process semaphore
@@ -182,3 +210,25 @@ void actor_node_message_queue_release(actor_node_t node, actor_process_id_t pid)
     }
 }
 
+// connect to remote node
+actor_node_id_t actor_node_connect(actor_node_t node,
+    char* const host_name, unsigned int host_port) {
+    // check for valid node
+    if (node == NULL) {
+        return -1;
+    }
+
+    // connect to remote
+    return actor_distributer_connect_to_node(node, host_name, host_port);
+}
+
+// listen for incomming connection
+actor_process_id_t actor_node_listen(actor_node_t node, unsigned int port) {
+    // check for valid node
+    if (node == NULL) {
+        return -1;
+    }
+
+    // start listening
+    return actor_distributer_listen(node, port);
+}

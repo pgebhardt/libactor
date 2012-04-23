@@ -2,12 +2,14 @@
 #define NODE_H
 
 // node id
-typedef unsigned int actor_node_id_t;
+typedef int actor_node_id_t;
 
 // node struct
 typedef struct {
     actor_node_id_t nid;
     actor_message_queue_t* message_queues;
+    // TODO: wrong type, should be actor_process_id_t
+    int* remote_nodes;
     actor_size_t message_queue_count;
     actor_size_t message_queue_pos;
     dispatch_semaphore_t process_semaphore;
@@ -34,5 +36,12 @@ actor_message_queue_t actor_node_message_queue_get(actor_node_t node,
 
 // release message queue
 void actor_node_message_queue_release(actor_node_t node, actor_process_id_t pid);
+
+// connect to remote node
+actor_node_id_t actor_node_connect(actor_node_t node,
+    char* const host_name, unsigned int host_port);
+
+// listen for incomming connection
+actor_process_id_t actor_node_listen(actor_node_t node, unsigned int port);
 
 #endif

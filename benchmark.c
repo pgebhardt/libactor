@@ -18,7 +18,8 @@ void main_process(actor_process_t main) {
             sprintf(buffer, "Hallo main, ich bin Prozess %d!", self->pid);
 
             // send message to main
-            actor_message_send(self, main->pid, buffer, strlen(buffer) + 1);
+            actor_message_send(self, self->node->nid,
+                main->pid, buffer, strlen(buffer) + 1);
         };
 
     // create processes

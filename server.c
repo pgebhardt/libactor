@@ -1,24 +1,40 @@
 #include <stdio.h>
 #include "actor/actor.h"
-#include "actor/distributer.h"
 
 void main_process(actor_process_t self) {
-    // listen on port 5000
-    actor_process_id_t listener = actor_distributer_listen(self->node, 5000);
+    // waiting for incomming connection
+    actor_node_id_t client = actor_node_listen(self->node, 3000);
+    printf("%d.%d: connected to %d!\n", self->node->nid, self->pid, client);
 
-    while (true) {
-        // receive message
-        actor_message_t message = actor_message_receive(self, 10.0);
+    // check success
+    if (client == -1) {
+        printf("%d.%d: Could not connect!\n", self->node->nid, self->pid);
+        return;
+    }
 
-        // check timeout
-        if (message == NULL) {
-            break;
-        }
+    // receive ping message
+    actor_message_t ping = actor_message_receive(self, 5.0);
 
-        // print message
-        printf("%s\n", (char*)message->data);
+    // check success
+    if (ping == NULL) {
+        printf("%d.%d: Timeout!\n", self->node->nid, self->pid);
+        return;
+    }
+    else {
+        printf("%d.%d: Ping!\n", self->node->nid, self->pid);
+        actor_message_release(ping);
+    }
 
-        actor_message_release(message);
+    // send pong
+    actor_message_t pong = actor_message_send(self, client, 0, "Pong!", 6);
+
+    // check success
+    if (pong == NULL) {
+        printf("%d.%d: Cannot send pong!\n", self->node->nid, self->pid);
+    }
+    else {
+        printf("%d.%d: Pong sent!\n", self->node->nid, self->pid);
+        actor_message_release(pong);
     }
 }
 
