@@ -1,17 +1,24 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include "actor/actor.h"
 
 void main_process(actor_process_t main) {
     // process id memory
-    int processes = 10;
+    int processes = 100;
     actor_process_id_t* pids = malloc(processes * sizeof(actor_process_id_t));
 
     // process function
     actor_process_function_t function = ^(actor_process_t self) {
+            // answer buffer
+            char buffer[100];
+
+            // create answer
+            sprintf(buffer, "Hallo main, ich bin Prozess %d!", self->pid);
+
             // send message to main
-            actor_message_send(self, main->pid, "Hallo main!", 12);
+            actor_message_send(self, main->pid, buffer, strlen(buffer) + 1);
         };
 
     // create processes
