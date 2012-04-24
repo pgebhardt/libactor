@@ -9,7 +9,7 @@ actor_error_t main_process(actor_process_t main) {
             if (actor_message_send(self, main->node->nid, main->pid,
                     "Ping!", 6) != ACTOR_SUCCESS) {
                 printf("%d.%d: Could not send ping!\n", self->node->nid, self->pid);
-                return ACTOR_FAILURE;
+                return ACTOR_ERROR;
             }
 
             // print ping send
@@ -19,7 +19,7 @@ actor_error_t main_process(actor_process_t main) {
             actor_message_t pong = NULL;
             if (actor_message_receive(self, &pong, 10.0) != ACTOR_SUCCESS) {
                 printf("%d.%d: Did not receive pong!\n", self->node->nid, self->pid);
-                return ACTOR_FAILURE;
+                return ACTOR_ERROR;
             }
 
             // print message
@@ -29,14 +29,14 @@ actor_error_t main_process(actor_process_t main) {
             // release message
             actor_message_release(pong);
 
-            return ACTOR_SUCCESS;
+            return ACTOR_ERROR;
         });
 
     // receive ping
     actor_message_t ping = NULL;
     if (actor_message_receive(main, &ping, 10.0) != ACTOR_SUCCESS) {
         printf("%d.%d: Did not receive ping!\n", main->node->nid, main->pid);
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR;
     }
 
     // print message
@@ -48,11 +48,14 @@ actor_error_t main_process(actor_process_t main) {
     // send pong
     if (actor_message_send(main, main->node->nid, pid, "Pong!", 6) != ACTOR_SUCCESS) {
         printf("%d.%d: Could not send pong!\n", main->node->nid, main->pid);
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR;
     }
 
     // print pong send
     printf("%d.%d: Pong sent!\n", main->node->nid, main->pid);
+
+    // sleep a bit
+    actor_process_sleep(main, 2.0);
 
     return ACTOR_SUCCESS;
 }
@@ -73,7 +76,7 @@ int main(int argc, char* argv[]) {
                     // receive error message
                     actor_message_t message = NULL;
                     if (actor_message_receive(self, &message, 10.0) != ACTOR_SUCCESS) {
-                        return ACTOR_FAILURE;
+                        return ACTOR_ERROR;
                     }
 
                     // cast to error message

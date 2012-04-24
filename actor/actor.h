@@ -5,28 +5,11 @@
 #include <stdlib.h>
 #include <dispatch/dispatch.h>
 
-// error
-// error type
-typedef unsigned int actor_error_t;
+// standard type definitions
+#include "common.h"
 
-// standart errors
-#define ACTOR_SUCCESS (0)
-#define ACTOR_FAILURE (1)
-
-//standard types
-// size
-typedef unsigned int actor_size_t;
-
-// time
-typedef double actor_time_t;
-
-// node id
-typedef int actor_node_id_t;
-
-// process id
-typedef int actor_process_id_t;
-
-#define ACTOR_INVALID_ID (-1)
+// error definitions
+#include "error.h"
 
 // actor includes
 #include "message.h"

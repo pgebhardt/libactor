@@ -23,7 +23,10 @@ actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
             header.quit = true;
             send(sock, &header, sizeof(actor_distributer_header_struct), 0);
 
-            break;
+            // close socket
+            close(sock);
+
+            return ACTOR_ERROR_TIMEOUT;
         }
 
         // create header
@@ -61,7 +64,7 @@ actor_error_t actor_distributer_message_receive(actor_process_t self, int sock) 
         // check for closed connection
         if (bytes_received <= 0) {
             close(sock);
-            return ACTOR_FAILURE;
+            return ACTOR_ERROR_NETWORK;
         }
 
         // check correct header
@@ -103,7 +106,7 @@ actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id
     char* const host_name, unsigned int port) {
     // check valid node
     if (node == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // init node id pointer
@@ -117,7 +120,7 @@ actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id
 
     // check success
     if (sock == -1) {
-        return -1;
+        return ACTOR_ERROR_NETWORK;
     }
 
     // get host address
@@ -133,7 +136,7 @@ actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id
     // connect
     if (connect(sock, (struct sockaddr *)&server_addr,
             sizeof(struct sockaddr)) == -1) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_NETWORK;
     }
 
     // send node id
@@ -148,7 +151,7 @@ actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id
         (node->remote_nodes[node_id] != ACTOR_INVALID_ID)) {
         // close connection
         close(sock);
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_NETWORK;
     }
 
     // create send process
@@ -179,7 +182,7 @@ actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
     unsigned int port) {
     // check valid node
     if (node == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // init node id pointer
@@ -193,7 +196,7 @@ actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
 
     // check success
     if (sock == -1) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_NETWORK;
     }
 
     // create server address struct
@@ -205,12 +208,12 @@ actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
 
     // bind socket to address
     if (bind(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) == -1) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_NETWORK;
     }
 
     // start listening
     if (listen(sock, 5)) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_NETWORK;
     }
 
     // accept incomming connections
@@ -233,7 +236,7 @@ actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
         (node->remote_nodes[node_id] != -1)){
         // close connection
         close(connected);
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_NETWORK;
     }
 
     // create send process

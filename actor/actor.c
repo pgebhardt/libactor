@@ -5,8 +5,11 @@ actor_error_t actor_process_spawn(actor_node_t node, actor_process_id_t* pid,
     actor_process_function_t function) {
     // check for valid node
     if (node == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
+
+    // error
+    actor_error_t error = ACTOR_SUCCESS;
 
     // init pid to invalid
     if (pid != NULL) {
@@ -16,7 +19,7 @@ actor_error_t actor_process_spawn(actor_node_t node, actor_process_id_t* pid,
     // create process
     actor_process_t process = NULL;
     if (actor_process_create(node, &process) != ACTOR_SUCCESS) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_MEMORY;
     }
 
     // get dispatch queue
@@ -28,7 +31,7 @@ actor_error_t actor_process_spawn(actor_node_t node, actor_process_id_t* pid,
         // cleanup
         actor_process_release(process);
 
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_DISPATCH;
     }
 
     // invoke new procces
@@ -65,18 +68,21 @@ actor_error_t actor_message_send(actor_process_t process, actor_node_id_t node_i
     actor_size_t size) {
     // check input
     if ((process == NULL) || (data == NULL)) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
+
+    // error
+    actor_error_t error = ACTOR_SUCCESS;
 
     // check ids
     if ((dest_id < 0) || (node_id < 0)) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // create message
     actor_message_t message = NULL;
     if (actor_message_create(&message, data, size) != ACTOR_SUCCESS) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_MEMORY;
     }
 
     // set message destination
@@ -88,22 +94,27 @@ actor_error_t actor_message_send(actor_process_t process, actor_node_id_t node_i
     // check node if
     if (node_id == process->node->nid) {
         // get message queue
-        if (actor_node_get_message_queue(process->node, &queue, dest_id)
-            != ACTOR_SUCCESS) {
+        error = actor_node_get_message_queue(process->node, &queue, dest_id);
+
+        // check success
+        if (error != ACTOR_SUCCESS) {
             // release message
             actor_message_release(message);
 
-            return ACTOR_FAILURE;
+            return error;
         }
     }
     else {
         // get remote node message queue
-        if (actor_node_get_message_queue(process->node, &queue,
-            process->node->remote_nodes[node_id]) != ACTOR_SUCCESS) {
+        error = actor_node_get_message_queue(process->node, &queue,
+            process->node->remote_nodes[node_id]);
+
+        // check success
+        if (error != ACTOR_SUCCESS) {
             // release message
             actor_message_release(message);
 
-            return ACTOR_FAILURE;
+            return error;
         }
     }
 
@@ -116,13 +127,18 @@ actor_error_t actor_message_receive(actor_process_t process, actor_message_t* me
     actor_time_t timeout) {
     // check for correct input
     if ((process == NULL) || (timeout < 0.0) || (message == NULL)) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
+    // error
+    actor_error_t error = ACTOR_SUCCESS;
+
     // get message
-    if (actor_message_queue_get(process->message_queue, message, timeout)
-        != ACTOR_SUCCESS) {
-        return ACTOR_FAILURE;
+    error = actor_message_queue_get(process->message_queue, message, timeout);
+
+    // check success
+    if (error != ACTOR_SUCCESS) {
+        return error;
     }
 
     return ACTOR_SUCCESS;

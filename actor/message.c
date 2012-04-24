@@ -6,7 +6,7 @@ actor_error_t actor_message_create(actor_message_t* message,
     actor_message_data_t const data, actor_size_t size) {
     // check valid message pointer
     if (message == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // init message pointer to NULL
@@ -17,7 +17,7 @@ actor_error_t actor_message_create(actor_message_t* message,
 
     // check success
     if (newMessage == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_MEMORY;
     }
 
     // init struct
@@ -34,7 +34,7 @@ actor_error_t actor_message_create(actor_message_t* message,
         // release message
         actor_message_release(newMessage);
 
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_MEMORY;
     }
 
     // copy message data
@@ -49,7 +49,7 @@ actor_error_t actor_message_create(actor_message_t* message,
 actor_error_t actor_message_release(actor_message_t message) {
     // check for valid message
     if (message == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // free message data
@@ -67,7 +67,7 @@ actor_error_t actor_message_release(actor_message_t message) {
 actor_error_t actor_message_queue_create(actor_message_queue_t* queue) {
     // check valid queue pointer
     if (queue == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // init queue pointer to NULL
@@ -78,7 +78,7 @@ actor_error_t actor_message_queue_create(actor_message_queue_t* queue) {
 
     // check success
     if (newQueue == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_MEMORY;
     }
 
     // init struct
@@ -97,7 +97,7 @@ actor_error_t actor_message_queue_create(actor_message_queue_t* queue) {
         // release message queue
         actor_message_queue_release(newQueue);
 
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_DISPATCH;
     }
 
     // set queue pointer
@@ -109,7 +109,7 @@ actor_error_t actor_message_queue_create(actor_message_queue_t* queue) {
 actor_error_t actor_message_queue_release(actor_message_queue_t queue) {
     // check for valid queue
     if (queue == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // release all messages
@@ -142,7 +142,7 @@ actor_error_t actor_message_queue_put(actor_message_queue_t queue,
     actor_message_t message) {
     // check for correct input
     if ((queue == NULL) || (message == NULL)) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // get write access
@@ -176,7 +176,7 @@ actor_error_t actor_message_queue_get(actor_message_queue_t queue,
     actor_message_t* message, actor_time_t timeout) {
     // check for correct input
     if ((queue == NULL) || (timeout < 0.0) || (message == NULL)) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // init message pointer to NULL;
@@ -189,7 +189,7 @@ actor_error_t actor_message_queue_get(actor_message_queue_t queue,
 
     // check for timeout
     if (err != 0) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_TIMEOUT;
     }
 
     // get read acces

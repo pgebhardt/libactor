@@ -4,8 +4,11 @@
 actor_error_t actor_process_create(actor_node_t node, actor_process_t* process) {
     // check valid input
     if ((node == NULL) || (process == NULL)) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
+
+    // error
+    actor_error_t error = ACTOR_SUCCESS;
 
     // init process pointer to NULL
     *process = NULL;
@@ -15,7 +18,7 @@ actor_error_t actor_process_create(actor_node_t node, actor_process_t* process) 
 
     // check success
     if (newProcess == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_MEMORY;
     }
 
     // init struct
@@ -34,16 +37,19 @@ actor_error_t actor_process_create(actor_node_t node, actor_process_t* process) 
         // release process
         actor_process_release(newProcess);
 
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_DISPATCH;
     }
 
     // get free message queue
-    if (actor_node_get_free_message_queue(node,
-        &newProcess->message_queue, &newProcess->pid) != ACTOR_SUCCESS) {
+    error = actor_node_get_free_message_queue(node,
+        &newProcess->message_queue, &newProcess->pid);
+
+    // check success
+    if (error != ACTOR_SUCCESS) {
         // release process
         actor_process_release(newProcess);
 
-        return ACTOR_FAILURE;
+        return error;
     }
 
     // set process pointer
@@ -55,7 +61,7 @@ actor_error_t actor_process_create(actor_node_t node, actor_process_t* process) 
 actor_error_t actor_process_release(actor_process_t process) {
     // check for valid process
     if (process == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // release sleep semaphore
@@ -78,7 +84,7 @@ actor_error_t actor_process_release(actor_process_t process) {
 actor_error_t actor_process_sleep(actor_process_t process, actor_time_t time) {
     // check for correct input
     if ((process == NULL) || (time < 0.0)) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // wait for timeout
@@ -90,17 +96,17 @@ actor_error_t actor_process_sleep(actor_process_t process, actor_time_t time) {
 }
 
 // link
-actor_error_t actor_process_link(actor_process_t process, actor_node_id_t supervisor_nid,
-    actor_process_id_t supervisor_pid) {
+actor_error_t actor_process_link(actor_process_t process,
+    actor_node_id_t supervisor_nid, actor_process_id_t supervisor_pid) {
     // check valid process
     if (process == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // check supervisor id
     if ((supervisor_pid < 0) || (supervisor_nid < 0) ||
         ((supervisor_nid == process->node->nid) && (supervisor_pid == process->pid))) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // set supervisor
@@ -113,7 +119,7 @@ actor_error_t actor_process_link(actor_process_t process, actor_node_id_t superv
 actor_error_t actor_process_unlink(actor_process_t process) {
     // check valid process
     if (process == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // unlink

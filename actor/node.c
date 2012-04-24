@@ -5,7 +5,7 @@ actor_error_t actor_node_create(actor_node_t* node, actor_node_id_t id,
     actor_size_t size) {
     // check valid node pointer
     if (node == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // init node pointer to NULL
@@ -16,7 +16,7 @@ actor_error_t actor_node_create(actor_node_t* node, actor_node_id_t id,
 
     // check success
     if (newNode == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_MEMORY;
     }
 
     // init struct
@@ -37,7 +37,7 @@ actor_error_t actor_node_create(actor_node_t* node, actor_node_id_t id,
         // release node
         actor_node_release(newNode);
 
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_MEMORY;
     }
 
     // create remote node array
@@ -48,7 +48,7 @@ actor_error_t actor_node_create(actor_node_t* node, actor_node_id_t id,
         // release node
         actor_node_release(newNode);
 
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_MEMORY;
     }
 
     // init array
@@ -64,7 +64,7 @@ actor_error_t actor_node_create(actor_node_t* node, actor_node_id_t id,
         // release node
         actor_node_release(newNode);
 
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_DISPATCH;
     }
 
     // create message queue create semaphore
@@ -75,7 +75,7 @@ actor_error_t actor_node_create(actor_node_t* node, actor_node_id_t id,
         // release node
         actor_node_release(newNode);
 
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_DISPATCH;
     }
 
     // set node pointer
@@ -87,7 +87,7 @@ actor_error_t actor_node_create(actor_node_t* node, actor_node_id_t id,
 actor_error_t actor_node_release(actor_node_t node) {
     // check for valid node
     if (node == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // wait for all processes to complete
@@ -128,8 +128,11 @@ actor_error_t actor_node_get_free_message_queue(actor_node_t node,
     actor_message_queue_t* queue, actor_process_id_t* pid) {
     // check for correct input
     if ((node == NULL) || (pid == NULL) || (queue == NULL)) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
+
+    // error
+    actor_error_t error = ACTOR_SUCCESS;
 
     // init queue and pid pointer
     *queue = NULL;
@@ -158,7 +161,7 @@ actor_error_t actor_node_get_free_message_queue(actor_node_t node,
 
         // check new id
         if (id >= node->message_queue_pos) {
-            return ACTOR_FAILURE;
+            return ACTOR_ERROR_TOO_MANY_PROCESSES;
         }
 
         // set new id
@@ -175,8 +178,11 @@ actor_error_t actor_node_get_free_message_queue(actor_node_t node,
 
     // create new message queue
     actor_message_queue_t newQueue = NULL;
-    if (actor_message_queue_create(&newQueue) != ACTOR_SUCCESS) {
-        return ACTOR_FAILURE;
+    error = actor_message_queue_create(&newQueue);
+
+    // check success
+    if (error != ACTOR_SUCCESS) {
+        return error;
     }
 
     // register queue
@@ -200,12 +206,12 @@ actor_error_t actor_node_get_message_queue(actor_node_t node,
     actor_message_queue_t* queue, actor_process_id_t pid) {
     // check for valid input
     if ((node == NULL) || (queue == NULL)) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // check for correct pid
     if ((pid >= node->message_queue_count) || (pid < 0)) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // set queue pointer
@@ -219,7 +225,7 @@ actor_error_t actor_node_message_queue_release(actor_node_t node,
     actor_process_id_t pid) {
     // check for correct pid
     if (pid >= node->message_queue_count) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // release message queue
@@ -244,7 +250,7 @@ actor_error_t actor_node_connect(actor_node_t node, actor_node_id_t* nid,
     char* const host_name, unsigned int host_port) {
     // check for valid node
     if (node == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // connect to remote
@@ -256,7 +262,7 @@ actor_error_t actor_node_listen(actor_node_t node, actor_node_id_t* nid,
     unsigned int port) {
     // check for valid node
     if (node == NULL) {
-        return ACTOR_FAILURE;
+        return ACTOR_ERROR_INVALUE;
     }
 
     // start listening
