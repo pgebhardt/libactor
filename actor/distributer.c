@@ -7,7 +7,7 @@
 #include "actor.h"
 
 // message send process
-void actor_distributer_message_send(actor_process_t self, int sock) {
+actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
     // create header
     actor_distributer_header_struct header;
 
@@ -45,10 +45,12 @@ void actor_distributer_message_send(actor_process_t self, int sock) {
 
     // close connection
     close(sock);
+
+    return ACTOR_SUCCESS;
 }
 
 // message receive process
-void actor_distributer_message_receive(actor_process_t self, int sock) {
+actor_error_t actor_distributer_message_receive(actor_process_t self, int sock) {
     int bytes_received;
     actor_distributer_header_struct header;
 
@@ -61,7 +63,7 @@ void actor_distributer_message_receive(actor_process_t self, int sock) {
         // check for closed connection
         if (bytes_received <= 0) {
             close(sock);
-            return;
+            return ACTOR_FAILURE;
         }
 
         // check correct header
@@ -94,6 +96,8 @@ void actor_distributer_message_receive(actor_process_t self, int sock) {
         // free message buffer
         free(data);
     }
+
+    return ACTOR_SUCCESS;
 }
 
 // connect to node
@@ -143,13 +147,13 @@ actor_node_id_t actor_distributer_connect_to_node(actor_node_t node,
     }
 
     // create send process
-    actor_process_id_t sender = actor_process_spawn(node, ^(actor_process_t self) {
-            actor_distributer_message_send(self, sock);
+    actor_process_id_t sender = actor_process_spawn(node, ^actor_error_t(actor_process_t self) {
+            return actor_distributer_message_send(self, sock);
         });
 
     // create receive process
-    actor_process_id_t receiver = actor_process_spawn(node, ^(actor_process_t self) {
-            actor_distributer_message_receive(self, sock);
+    actor_process_id_t receiver = actor_process_spawn(node, ^actor_error_t(actor_process_t self) {
+            return actor_distributer_message_receive(self, sock);
         });
 
     // save connector
@@ -214,13 +218,13 @@ actor_node_id_t actor_distributer_listen(actor_node_t node, unsigned int port) {
     }
 
     // create send process
-    actor_process_id_t sender = actor_process_spawn(node, ^(actor_process_t self) {
-            actor_distributer_message_send(self, connected);
+    actor_process_id_t sender = actor_process_spawn(node, ^actor_error_t(actor_process_t self) {
+            return actor_distributer_message_send(self, connected);
         });
 
     // create receive process
-    actor_process_id_t receiver = actor_process_spawn(node, ^(actor_process_t self) {
-            actor_distributer_message_receive(self, connected);
+    actor_process_id_t receiver = actor_process_spawn(node, ^actor_error_t(actor_process_t self) {
+            return actor_distributer_message_receive(self, connected);
         });
 
     // save connector
