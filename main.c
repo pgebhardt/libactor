@@ -65,8 +65,35 @@ int main(int argc, char* argv[]) {
     }
 
     // spawn main process
-    actor_process_spawn(node, NULL, ^actor_error_t(actor_process_t self) {
-            return main_process(self);
+    actor_process_spawn(node, NULL, ^actor_error_t(actor_process_t main) {
+            // start main process supervisor
+            actor_process_id_t supervisor;
+            actor_process_spawn(node, &supervisor,
+                ^actor_error_t(actor_process_t self) {
+                    // receive error message
+                    actor_message_t message = NULL;
+                    if (actor_message_receive(self, &message, 10.0) != ACTOR_SUCCESS) {
+                        return ACTOR_FAILURE;
+                    }
+
+                    // cast to error message
+                    actor_process_error_message_t error_message =
+                        (actor_process_error_message_t)message->data;
+
+                    // print error
+                    printf("%d.%d died with %d!\n", error_message->nid,
+                        error_message->pid, error_message->error);
+
+                    // release message
+                    actor_message_release(message);
+
+                    return ACTOR_SUCCESS;
+                });
+
+            // link to supervisor
+            actor_process_link(main, node->nid, supervisor);
+
+            return main_process(main);
         });
 
     // release node
