@@ -5,11 +5,19 @@ actor_error_t main_process(actor_process_t main) {
     // start ping process
     actor_process_id_t pid = ACTOR_INVALID_ID;
     actor_process_spawn(main->node, &pid, ^actor_error_t(actor_process_t self) {
+            // set main supervisor
+            actor_process_link(self, main->supervisor_nid, main->supervisor_pid);
+
+            // error
+            actor_error_t error = ACTOR_SUCCESS;
+
             // send ping message to main
-            if (actor_message_send(self, main->node->nid, main->pid,
-                    "Ping!", 6) != ACTOR_SUCCESS) {
-                printf("%d.%d: Could not send ping!\n", self->node->nid, self->pid);
-                return ACTOR_ERROR;
+            error = actor_message_send(self, main->node->nid, main->pid,
+                "Ping!", 6);
+
+            // check success
+            if (error != ACTOR_SUCCESS) {
+                return error;
             }
 
             // print ping send
@@ -17,9 +25,11 @@ actor_error_t main_process(actor_process_t main) {
 
             // receive pong
             actor_message_t pong = NULL;
-            if (actor_message_receive(self, &pong, 10.0) != ACTOR_SUCCESS) {
-                printf("%d.%d: Did not receive pong!\n", self->node->nid, self->pid);
-                return ACTOR_ERROR;
+            error = actor_message_receive(self, &pong, 10.0);
+
+            // check success
+            if (error != ACTOR_SUCCESS) {
+                return error;
             }
 
             // print message
@@ -32,11 +42,16 @@ actor_error_t main_process(actor_process_t main) {
             return ACTOR_ERROR;
         });
 
+    // error
+    actor_error_t error = ACTOR_SUCCESS;
+
     // receive ping
     actor_message_t ping = NULL;
-    if (actor_message_receive(main, &ping, 10.0) != ACTOR_SUCCESS) {
-        printf("%d.%d: Did not receive ping!\n", main->node->nid, main->pid);
-        return ACTOR_ERROR;
+    error = actor_message_receive(main, &ping, 10.0);
+
+    // check success
+    if (error != ACTOR_SUCCESS) {
+        return error;
     }
 
     // print message
@@ -46,9 +61,11 @@ actor_error_t main_process(actor_process_t main) {
     actor_message_release(ping);
 
     // send pong
-    if (actor_message_send(main, main->node->nid, pid, "Pong!", 6) != ACTOR_SUCCESS) {
-        printf("%d.%d: Could not send pong!\n", main->node->nid, main->pid);
-        return ACTOR_ERROR;
+    // error = actor_message_send(main, main->node->nid, pid, "Pong!", 6);
+
+    // check success
+    if (error != ACTOR_SUCCESS) {
+        return error;
     }
 
     // print pong send
@@ -75,7 +92,7 @@ int main(int argc, char* argv[]) {
                 ^actor_error_t(actor_process_t self) {
                     // receive error message
                     actor_message_t message = NULL;
-                    if (actor_message_receive(self, &message, 10.0) != ACTOR_SUCCESS) {
+                    if (actor_message_receive(self, &message, 20.0) != ACTOR_SUCCESS) {
                         return ACTOR_ERROR;
                     }
 
