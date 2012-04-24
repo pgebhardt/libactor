@@ -23,23 +23,24 @@ typedef struct {
 typedef actor_message_queue_struct* actor_message_queue_t;
 
 // create new message
-actor_message_t actor_message_create(actor_message_data_t const data,
-    actor_size_t size);
+actor_error_t actor_message_create(actor_message_t* message,
+    actor_message_data_t const data, actor_size_t size);
 
 // cleanup message
 actor_error_t actor_message_release(actor_message_t message);
 
 // create new queue
-actor_message_queue_t actor_message_queue_create();
+actor_error_t actor_message_queue_create(actor_message_queue_t* queue);
 
 // cleanup queue
 actor_error_t actor_message_queue_release(actor_message_queue_t queue);
 
 // add new message to queue
-actor_message_t actor_message_queue_put(actor_message_queue_t queue,
+actor_error_t actor_message_queue_put(actor_message_queue_t queue,
     actor_message_t message);
 
 // get message from queue
-actor_message_t actor_message_queue_get(actor_message_queue_t queue, actor_time_t timeout);
+actor_error_t actor_message_queue_get(actor_message_queue_t queue,
+    actor_message_t* message, actor_time_t timeout);
 
 #endif

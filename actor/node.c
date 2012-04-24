@@ -1,75 +1,87 @@
 #include "actor.h"
 
 // create node
-actor_node_t actor_node_create(actor_node_id_t id, actor_size_t size) {
+actor_error_t actor_node_create(actor_node_t* node, actor_node_id_t id,
+    actor_size_t size) {
+    // check valid node pointer
+    if (node == NULL) {
+        return ACTOR_FAILURE;
+    }
+
+    // init node pointer to NULL
+    *node = NULL;
+
     // create node
-    actor_node_t node = malloc(sizeof(actor_node_struct));
+    actor_node_t newNode = malloc(sizeof(actor_node_struct));
 
     // check success
-    if (node == NULL) {
-        return NULL;
+    if (newNode == NULL) {
+        return ACTOR_FAILURE;
     }
 
     // init struct
-    node->nid = id;
-    node->message_queues = NULL;
-    node->remote_nodes = NULL;
-    node->message_queue_count = size;
-    node->message_queue_pos = 0;
-    node->process_semaphore = NULL;
-    node->message_queue_create_semaphore = NULL;
-    node->process_count = 0;
+    newNode->nid = id;
+    newNode->message_queues = NULL;
+    newNode->remote_nodes = NULL;
+    newNode->message_queue_count = size;
+    newNode->message_queue_pos = 0;
+    newNode->process_semaphore = NULL;
+    newNode->message_queue_create_semaphore = NULL;
+    newNode->process_count = 0;
 
     // create message queues
-    node->message_queues = malloc(sizeof(actor_message_queue_t) * size);
+    newNode->message_queues = malloc(sizeof(actor_message_queue_t) * size);
 
     // check success
-    if (node->message_queues == NULL) {
+    if (newNode->message_queues == NULL) {
         // release node
-        actor_node_release(node);
+        actor_node_release(newNode);
 
-        return NULL;
+        return ACTOR_FAILURE;
     }
 
     // create remote node array
-    node->remote_nodes = malloc(sizeof(int) * 1024);
+    newNode->remote_nodes = malloc(sizeof(int) * 1024);
 
     // check success
-    if (node->remote_nodes == NULL) {
+    if (newNode->remote_nodes == NULL) {
         // release node
-        actor_node_release(node);
+        actor_node_release(newNode);
 
-        return NULL;
+        return ACTOR_FAILURE;
     }
 
     // init array
     for (actor_size_t i = 0; i < 1024; i++) {
-        node->remote_nodes[i] = -1;
+        newNode->remote_nodes[i] = -1;
     }
 
     // create process semaphore
-    node->process_semaphore = dispatch_semaphore_create(0);
+    newNode->process_semaphore = dispatch_semaphore_create(0);
 
     // check success
-    if (node->process_semaphore == NULL) {
+    if (newNode->process_semaphore == NULL) {
         // release node
-        actor_node_release(node);
+        actor_node_release(newNode);
 
-        return NULL;
+        return ACTOR_FAILURE;
     }
 
     // create message queue create semaphore
-    node->message_queue_create_semaphore = dispatch_semaphore_create(1);
+    newNode->message_queue_create_semaphore = dispatch_semaphore_create(1);
 
     // check success
-    if (node->message_queue_create_semaphore == NULL) {
+    if (newNode->message_queue_create_semaphore == NULL) {
         // release node
-        actor_node_release(node);
+        actor_node_release(newNode);
 
-        return NULL;
+        return ACTOR_FAILURE;
     }
 
-    return node;
+    // set node pointer
+    *node = newNode;
+
+    return ACTOR_SUCCESS;
 }
 
 actor_error_t actor_node_release(actor_node_t node) {
@@ -112,15 +124,20 @@ actor_error_t actor_node_release(actor_node_t node) {
 }
 
 // get free message queue
-actor_message_queue_t actor_node_message_queue_get_free(actor_node_t node,
-    actor_process_id_t* pid) {
+actor_error_t actor_node_get_free_message_queue(actor_node_t node,
+    actor_message_queue_t* queue, actor_process_id_t* pid) {
     // check for correct input
-    if ((node == NULL) || (pid == NULL)) {
-        return NULL;
+    if ((node == NULL) || (pid == NULL) || (queue == NULL)) {
+        return ACTOR_FAILURE;
     }
 
+    // init queue and pid pointer
+    *queue = NULL;
+    *pid = ACTOR_INVALID_ID;
+
     // get message queue create access
-    dispatch_semaphore_wait(node->message_queue_create_semaphore, DISPATCH_TIME_FOREVER);
+    dispatch_semaphore_wait(node->message_queue_create_semaphore,
+        DISPATCH_TIME_FOREVER);
 
     // get possible id
     actor_process_id_t id = node->message_queue_pos;
@@ -141,7 +158,7 @@ actor_message_queue_t actor_node_message_queue_get_free(actor_node_t node,
 
         // check new id
         if (id >= node->message_queue_pos) {
-            return NULL;
+            return ACTOR_FAILURE;
         }
 
         // set new id
@@ -157,12 +174,13 @@ actor_message_queue_t actor_node_message_queue_get_free(actor_node_t node,
     }
 
     // create new message queue
-    node->message_queues[*pid] = actor_message_queue_create();
-
-    // check success
-    if (node->message_queues[*pid] == NULL) {
-        return NULL;
+    actor_message_queue_t newQueue = NULL;
+    if (actor_message_queue_create(&newQueue) != ACTOR_SUCCESS) {
+        return ACTOR_FAILURE;
     }
+
+    // register queue
+    node->message_queues[*pid] = newQueue;
 
     // increment process counter
     node->process_count++;
@@ -171,27 +189,34 @@ actor_message_queue_t actor_node_message_queue_get_free(actor_node_t node,
     // release message queue create access
     dispatch_semaphore_signal(node->message_queue_create_semaphore);
 
-    return node->message_queues[*pid];
+    // set queue pointer
+    *queue = newQueue;
+
+    return ACTOR_SUCCESS;
 }
 
 // get message queue for id
-actor_message_queue_t actor_node_message_queue_get(actor_node_t node,
-    actor_process_id_t pid) {
-    // check for valid node
-    if (node == NULL) {
-        return NULL;
+actor_error_t actor_node_get_message_queue(actor_node_t node,
+    actor_message_queue_t* queue, actor_process_id_t pid) {
+    // check for valid input
+    if ((node == NULL) || (queue == NULL)) {
+        return ACTOR_FAILURE;
     }
 
     // check for correct pid
-    if (pid >= node->message_queue_count) {
-        return NULL;
+    if ((pid >= node->message_queue_count) || (pid < 0)) {
+        return ACTOR_FAILURE;
     }
 
-    return node->message_queues[pid];
+    // set queue pointer
+    *queue = node->message_queues[pid];
+
+    return ACTOR_SUCCESS;
 }
 
 // release message queue
-actor_error_t actor_node_message_queue_release(actor_node_t node, actor_process_id_t pid) {
+actor_error_t actor_node_message_queue_release(actor_node_t node,
+    actor_process_id_t pid) {
     // check for correct pid
     if (pid >= node->message_queue_count) {
         return ACTOR_FAILURE;
@@ -215,24 +240,25 @@ actor_error_t actor_node_message_queue_release(actor_node_t node, actor_process_
 }
 
 // connect to remote node
-actor_node_id_t actor_node_connect(actor_node_t node,
+actor_error_t actor_node_connect(actor_node_t node, actor_node_id_t* nid,
     char* const host_name, unsigned int host_port) {
     // check for valid node
     if (node == NULL) {
-        return -1;
+        return ACTOR_FAILURE;
     }
 
     // connect to remote
-    return actor_distributer_connect_to_node(node, host_name, host_port);
+    return actor_distributer_connect_to_node(node, nid, host_name, host_port);
 }
 
 // listen for incomming connection
-actor_node_id_t actor_node_listen(actor_node_t node, unsigned int port) {
+actor_error_t actor_node_listen(actor_node_t node, actor_node_id_t* nid,
+    unsigned int port) {
     // check for valid node
     if (node == NULL) {
-        return -1;
+        return ACTOR_FAILURE;
     }
 
     // start listening
-    return actor_distributer_listen(node, port);
+    return actor_distributer_listen(node, nid, port);
 }

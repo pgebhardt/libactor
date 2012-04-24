@@ -1,55 +1,53 @@
 #include "actor.h"
 
 // create process
-actor_error_t actor_process_create(actor_node_t node, actor_process_t* process_pointer) {
+actor_error_t actor_process_create(actor_node_t node, actor_process_t* process) {
     // check valid input
-    if ((node == NULL) || (process_pointer == NULL)) {
+    if ((node == NULL) || (process == NULL)) {
         return ACTOR_FAILURE;
     }
 
     // init process pointer to NULL
-    *process_pointer = NULL;
+    *process = NULL;
 
     // create process struct
-    actor_process_t process = malloc(sizeof(actor_process_struct));
+    actor_process_t newProcess = malloc(sizeof(actor_process_struct));
 
     // check success
-    if (process == NULL) {
+    if (newProcess == NULL) {
         return ACTOR_FAILURE;
     }
 
     // init struct
-    process->pid = ACTOR_INVALID_ID;
-    process->message_queue = NULL;
-    process->sleep_semaphore = NULL;
-    process->node = node;
-    process->supervisor_nid = ACTOR_INVALID_ID;
-    process->supervisor_pid = ACTOR_INVALID_ID;
+    newProcess->pid = ACTOR_INVALID_ID;
+    newProcess->message_queue = NULL;
+    newProcess->sleep_semaphore = NULL;
+    newProcess->node = node;
+    newProcess->supervisor_nid = ACTOR_INVALID_ID;
+    newProcess->supervisor_pid = ACTOR_INVALID_ID;
 
     // create sleep semaphore
-    process->sleep_semaphore = dispatch_semaphore_create(0);
+    newProcess->sleep_semaphore = dispatch_semaphore_create(0);
 
     // check for success
-    if (process->sleep_semaphore == NULL) {
+    if (newProcess->sleep_semaphore == NULL) {
         // release process
-        actor_process_release(process);
+        actor_process_release(newProcess);
 
         return ACTOR_FAILURE;
     }
 
     // get free message queue
-    process->message_queue = actor_node_message_queue_get_free(node, &process->pid);
-
-    // check success
-    if (process->message_queue == NULL) {
+    if (actor_node_get_free_message_queue(node,
+        &newProcess->message_queue, &newProcess->pid) != ACTOR_SUCCESS) {
         // release process
-        actor_process_release(process);
+        actor_process_release(newProcess);
 
         return ACTOR_FAILURE;
     }
 
     // set process pointer
-    *process_pointer = process;
+    *process = newProcess;
 
     return ACTOR_SUCCESS;
 }

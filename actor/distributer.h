@@ -10,10 +10,11 @@ typedef struct {
 typedef actor_distributer_header_struct* actor_distributer_header_t;
 
 // connect to node
-actor_node_id_t actor_distributer_connect_to_node(actor_node_t node,
+actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id_t* nid,
     char* const host_name, unsigned int port);
 
 // listen incomming connections
-actor_node_id_t actor_distributer_listen(actor_node_t node, unsigned int port);
+actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
+    unsigned int port);
 
 #endif

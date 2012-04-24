@@ -63,25 +63,23 @@ actor_error_t actor_process_spawn(actor_node_t node, actor_process_id_t* pid,
 }
 
 // message sendig
-actor_message_t actor_message_send(actor_process_t process, actor_node_id_t node_id,
+actor_error_t actor_message_send(actor_process_t process, actor_node_id_t node_id,
     actor_process_id_t dest_id, actor_message_data_t const data,
     actor_size_t size) {
     // check input
     if ((process == NULL) || (data == NULL)) {
-        return NULL;
+        return ACTOR_FAILURE;
     }
 
     // check ids
     if ((dest_id < 0) || (node_id < 0)) {
-        return NULL;
+        return ACTOR_FAILURE;
     }
 
     // create message
-    actor_message_t message = actor_message_create(data, size);
-
-    // check success
-    if (message == NULL) {
-        return NULL;
+    actor_message_t message = NULL;
+    if (actor_message_create(&message, data, size) != ACTOR_SUCCESS) {
+        return ACTOR_FAILURE;
     }
 
     // set message destination
@@ -93,27 +91,22 @@ actor_message_t actor_message_send(actor_process_t process, actor_node_id_t node
     // check node if
     if (node_id == process->node->nid) {
         // get message queue
-        queue = actor_node_message_queue_get(process->node, dest_id);
-
-        // check success
-        if (queue == NULL) {
+        if (actor_node_get_message_queue(process->node, &queue, dest_id)
+            != ACTOR_SUCCESS) {
             // release message
             actor_message_release(message);
 
-            return NULL;
+            return ACTOR_FAILURE;
         }
     }
     else {
         // get remote node message queue
-        queue = actor_node_message_queue_get(process->node,
-            process->node->remote_nodes[node_id]);
-
-        // check success
-        if (queue == NULL) {
+        if (actor_node_get_message_queue(process->node, &queue,
+            process->node->remote_nodes[node_id]) != ACTOR_SUCCESS) {
             // release message
             actor_message_release(message);
 
-            return NULL;
+            return ACTOR_FAILURE;
         }
     }
 
@@ -122,20 +115,18 @@ actor_message_t actor_message_send(actor_process_t process, actor_node_id_t node
 }
 
 // message receive
-actor_message_t actor_message_receive(actor_process_t process,
+actor_error_t actor_message_receive(actor_process_t process, actor_message_t* message,
     actor_time_t timeout) {
     // check for correct input
-    if ((process == NULL) || (timeout < 0.0)) {
-        return NULL;
+    if ((process == NULL) || (timeout < 0.0) || (message == NULL)) {
+        return ACTOR_FAILURE;
     }
 
     // get message
-    actor_message_t message = actor_message_queue_get(process->message_queue, timeout);
-
-    // check success
-    if (message == NULL) {
-        return NULL;
+    if (actor_message_queue_get(process->message_queue, message, timeout)
+        != ACTOR_SUCCESS) {
+        return ACTOR_FAILURE;
     }
 
-    return message;
+    return ACTOR_SUCCESS;
 }

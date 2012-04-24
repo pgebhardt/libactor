@@ -2,37 +2,48 @@
 #include "actor.h"
 
 // create new message
-actor_message_t actor_message_create(actor_message_data_t const data,
-    actor_size_t size) {
+actor_error_t actor_message_create(actor_message_t* message,
+    actor_message_data_t const data, actor_size_t size) {
+    // check valid message pointer
+    if (message == NULL) {
+        return ACTOR_FAILURE;
+    }
+
+    // init message pointer to NULL
+    *message = NULL;
+
     // create message
-    actor_message_t message = malloc(sizeof(actor_message_struct));
+    actor_message_t newMessage = malloc(sizeof(actor_message_struct));
 
     // check success
-    if (message == NULL) {
-        return NULL;
+    if (newMessage == NULL) {
+        return ACTOR_FAILURE;
     }
 
     // init struct
-    message->next = NULL;
-    message->destination = -1;
-    message->size = size;
-    message->data = NULL;
+    newMessage->next = NULL;
+    newMessage->destination = -1;
+    newMessage->size = size;
+    newMessage->data = NULL;
 
     // create message data memory
-    message->data = malloc(size);
+    newMessage->data = malloc(size);
 
     // check success
-    if (message->data == NULL) {
+    if (newMessage->data == NULL) {
         // release message
-        actor_message_release(message);
+        actor_message_release(newMessage);
 
-        return NULL;
+        return ACTOR_FAILURE;
     }
 
     // copy message data
-    memcpy(message->data, data, size);
+    memcpy(newMessage->data, data, size);
 
-    return message;
+    // set message pointer
+    *message = newMessage;
+
+    return ACTOR_SUCCESS;
 }
 
 actor_error_t actor_message_release(actor_message_t message) {
@@ -53,48 +64,59 @@ actor_error_t actor_message_release(actor_message_t message) {
 }
 
 // create new queue
-actor_message_queue_t actor_message_queue_create() {
+actor_error_t actor_message_queue_create(actor_message_queue_t* queue) {
+    // check valid queue pointer
+    if (queue == NULL) {
+        return ACTOR_FAILURE;
+    }
+
+    // init queue pointer to NULL
+    *queue = NULL;
+
     // create new message struct
-    actor_message_queue_t queue = malloc(sizeof(actor_message_queue_struct));
+    actor_message_queue_t newQueue = malloc(sizeof(actor_message_queue_struct));
 
     // check success
-    if (queue == NULL) {
-        return NULL;
+    if (newQueue == NULL) {
+        return ACTOR_FAILURE;
     }
 
     // init struct
-    queue->semaphore_read_write = NULL;
-    queue->semaphore_messages = NULL;
-    queue->first = NULL;
-    queue->last = NULL;
+    newQueue->semaphore_read_write = NULL;
+    newQueue->semaphore_messages = NULL;
+    newQueue->first = NULL;
+    newQueue->last = NULL;
 
     // create semaphores
-    queue->semaphore_read_write = dispatch_semaphore_create(1);
-    queue->semaphore_messages = dispatch_semaphore_create(0);
+    newQueue->semaphore_read_write = dispatch_semaphore_create(1);
+    newQueue->semaphore_messages = dispatch_semaphore_create(0);
 
     // check success
-    if ((queue->semaphore_read_write == NULL) ||
-            (queue->semaphore_messages == NULL)) {
+    if ((newQueue->semaphore_read_write == NULL) ||
+            (newQueue->semaphore_messages == NULL)) {
         // release message queue
-        actor_message_queue_release(queue);
+        actor_message_queue_release(newQueue);
 
-        return NULL;
+        return ACTOR_FAILURE;
     }
 
-    return queue;
+    // set queue pointer
+    *queue = newQueue;
+
+    return ACTOR_SUCCESS;
 }
 
-void actor_message_queue_release(actor_message_queue_t queue) {
+actor_error_t actor_message_queue_release(actor_message_queue_t queue) {
     // check for valid queue
     if (queue == NULL) {
-        return;
+        return ACTOR_FAILURE;
     }
 
     // release all messages
     actor_message_t message = NULL;
     do {
         // get message
-        message = actor_message_queue_get(queue, 0.0);
+        actor_message_queue_get(queue, &message, 0.0);
 
         // release message
         actor_message_release(message);
@@ -111,14 +133,16 @@ void actor_message_queue_release(actor_message_queue_t queue) {
 
     // free queue
     free(queue);
+
+    return ACTOR_SUCCESS;
 }
 
 // add new message to queue
-actor_message_t actor_message_queue_put(actor_message_queue_t queue,
+actor_error_t actor_message_queue_put(actor_message_queue_t queue,
     actor_message_t message) {
     // check for correct input
     if ((queue == NULL) || (message == NULL)) {
-        return NULL;
+        return ACTOR_FAILURE;
     }
 
     // get write access
@@ -144,17 +168,19 @@ actor_message_t actor_message_queue_put(actor_message_queue_t queue,
     // signal read write access
     dispatch_semaphore_signal(queue->semaphore_read_write);
 
-    // return message on success
-    return message;
+    return ACTOR_SUCCESS;
 }
 
 // get message from queue
-actor_message_t actor_message_queue_get(actor_message_queue_t queue,
-    actor_time_t timeout) {
+actor_error_t actor_message_queue_get(actor_message_queue_t queue,
+    actor_message_t* message, actor_time_t timeout) {
     // check for correct input
-    if ((queue == NULL) || (timeout < 0.0)) {
-        return NULL;
+    if ((queue == NULL) || (timeout < 0.0) || (message == NULL)) {
+        return ACTOR_FAILURE;
     }
+
+    // init message pointer to NULL;
+    *message = NULL;
 
     // get message recource
     long err = dispatch_semaphore_wait(queue->semaphore_messages,
@@ -163,17 +189,17 @@ actor_message_t actor_message_queue_get(actor_message_queue_t queue,
 
     // check for timeout
     if (err != 0) {
-        return NULL;
+        return ACTOR_FAILURE;
     }
 
     // get read acces
     dispatch_semaphore_wait(queue->semaphore_read_write, DISPATCH_TIME_FOREVER);
 
     // get message
-    actor_message_t message = queue->first;
+    actor_message_t newMessage = queue->first;
 
     // set new first message to next
-    queue->first = (actor_message_t)message->next;
+    queue->first = (actor_message_t)newMessage->next;
 
     // if first is NULL set last to NULL
     if (queue->first == NULL) {
@@ -184,7 +210,10 @@ actor_message_t actor_message_queue_get(actor_message_queue_t queue,
     dispatch_semaphore_signal(queue->semaphore_read_write);
 
     // set next element of message to NULL
-    message->next = NULL;
+    newMessage->next = NULL;
 
-    return message;
+    // set message pointer
+    *message = newMessage;
+
+    return ACTOR_SUCCESS;
 }

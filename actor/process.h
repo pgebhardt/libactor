@@ -24,7 +24,7 @@ typedef actor_process_error_message_struct* actor_process_error_message_t;
 typedef actor_error_t (^actor_process_function_t)(actor_process_t const self);
 
 // create process
-actor_error_t actor_process_create(actor_node_t node, actor_process_t* process_pointer);
+actor_error_t actor_process_create(actor_node_t node, actor_process_t* process);
 
 // release process
 actor_error_t actor_process_release(actor_process_t process);
@@ -33,8 +33,8 @@ actor_error_t actor_process_release(actor_process_t process);
 actor_error_t actor_process_sleep(actor_process_t process, actor_time_t time);
 
 // link
-actor_error_t actor_process_link(actor_process_t process, actor_node_id_t supervisor_nid,
-    actor_process_id_t supervisor_pid);
+actor_error_t actor_process_link(actor_process_t process,
+    actor_node_id_t supervisor_nid, actor_process_id_t supervisor_pid);
 
 // unlink
 actor_error_t actor_process_unlink(actor_process_t process);

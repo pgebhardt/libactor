@@ -17,10 +17,8 @@ actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
     // send loop
     while (true) {
         // get message
-        message = actor_message_receive(self, 10.0);
-
-        // check timeout
-        if (message == NULL) {
+        actor_message_t message = NULL;
+        if (actor_message_receive(self, &message, 10.0) != ACTOR_SUCCESS) {
             // quit connection
             header.quit = true;
             send(sock, &header, sizeof(actor_distributer_header_struct), 0);
@@ -101,11 +99,16 @@ actor_error_t actor_distributer_message_receive(actor_process_t self, int sock) 
 }
 
 // connect to node
-actor_node_id_t actor_distributer_connect_to_node(actor_node_t node,
+actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id_t* nid,
     char* const host_name, unsigned int port) {
     // check valid node
     if (node == NULL) {
-        return -1;
+        return ACTOR_FAILURE;
+    }
+
+    // init node id pointer
+    if (nid != NULL) {
+        *nid = ACTOR_INVALID_ID;
     }
 
     // create client socket
@@ -128,8 +131,9 @@ actor_node_id_t actor_distributer_connect_to_node(actor_node_t node,
     bzero(&(server_addr.sin_zero),8);
 
     // connect
-    if (connect(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) == -1) {
-        return -1;
+    if (connect(sock, (struct sockaddr *)&server_addr,
+            sizeof(struct sockaddr)) == -1) {
+        return ACTOR_FAILURE;
     }
 
     // send node id
@@ -140,33 +144,47 @@ actor_node_id_t actor_distributer_connect_to_node(actor_node_t node,
     bytes_received = recv(sock, &node_id, sizeof(actor_node_id_t), 0);
 
     // check success
-    if ((bytes_received != sizeof(actor_node_id_t)) || (node->remote_nodes[node_id] != -1)){
+    if ((bytes_received != sizeof(actor_node_id_t)) ||
+        (node->remote_nodes[node_id] != ACTOR_INVALID_ID)) {
         // close connection
         close(sock);
-        return -1;
+        return ACTOR_FAILURE;
     }
 
     // create send process
-    actor_process_id_t sender = actor_process_spawn(node, ^actor_error_t(actor_process_t self) {
+    actor_process_id_t sender = ACTOR_INVALID_ID;
+    actor_process_spawn(node, &sender,
+        ^actor_error_t(actor_process_t self) {
             return actor_distributer_message_send(self, sock);
         });
 
     // create receive process
-    actor_process_id_t receiver = actor_process_spawn(node, ^actor_error_t(actor_process_t self) {
+    actor_process_spawn(node, NULL, ^actor_error_t(actor_process_t self) {
             return actor_distributer_message_receive(self, sock);
         });
 
     // save connector
     node->remote_nodes[node_id] = sender;
 
-    return node_id;
+    // set node id
+    if (nid != NULL) {
+        *nid = node_id;
+    }
+
+    return ACTOR_SUCCESS;
 }
 
 // listen incomming connections
-actor_node_id_t actor_distributer_listen(actor_node_t node, unsigned int port) {
+actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
+    unsigned int port) {
     // check valid node
     if (node == NULL) {
-        return -1;
+        return ACTOR_FAILURE;
+    }
+
+    // init node id pointer
+    if (nid != NULL) {
+        *nid = ACTOR_INVALID_ID;
     }
 
     // create server socket
@@ -175,7 +193,7 @@ actor_node_id_t actor_distributer_listen(actor_node_t node, unsigned int port) {
 
     // check success
     if (sock == -1) {
-        return -1;
+        return ACTOR_FAILURE;
     }
 
     // create server address struct
@@ -187,12 +205,12 @@ actor_node_id_t actor_distributer_listen(actor_node_t node, unsigned int port) {
 
     // bind socket to address
     if (bind(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) == -1) {
-        return -1;
+        return ACTOR_FAILURE;
     }
 
     // start listening
     if (listen(sock, 5)) {
-        return -1;
+        return ACTOR_FAILURE;
     }
 
     // accept incomming connections
@@ -211,19 +229,21 @@ actor_node_id_t actor_distributer_listen(actor_node_t node, unsigned int port) {
     bytes_received = recv(connected, &node_id, sizeof(actor_node_id_t), 0);
 
     // check success
-    if ((bytes_received != sizeof(actor_node_id_t)) || (node->remote_nodes[node_id] != -1)){
+    if ((bytes_received != sizeof(actor_node_id_t)) ||
+        (node->remote_nodes[node_id] != -1)){
         // close connection
         close(connected);
-        return -1;
+        return ACTOR_FAILURE;
     }
 
     // create send process
-    actor_process_id_t sender = actor_process_spawn(node, ^actor_error_t(actor_process_t self) {
+    actor_process_id_t sender = ACTOR_INVALID_ID;
+    actor_process_spawn(node, &sender, ^actor_error_t(actor_process_t self) {
             return actor_distributer_message_send(self, connected);
         });
 
     // create receive process
-    actor_process_id_t receiver = actor_process_spawn(node, ^actor_error_t(actor_process_t self) {
+    actor_process_spawn(node, NULL, ^actor_error_t(actor_process_t self) {
             return actor_distributer_message_receive(self, connected);
         });
 
