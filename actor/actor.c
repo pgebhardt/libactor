@@ -1,5 +1,4 @@
 #include "actor.h"
-#include <stdio.h>
 
 // spawn process
 actor_process_id_t actor_process_spawn(actor_node_t node,

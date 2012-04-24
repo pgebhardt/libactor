@@ -1,7 +1,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <stdio.h>
-#include "netdb.h"
+#include <netinet/in.h>
+#include <unistd.h>
+#include <netdb.h>
 #include <string.h>
 #include "actor.h"
 
@@ -59,20 +60,17 @@ void actor_distributer_message_receive(actor_process_t self, int sock) {
 
         // check for closed connection
         if (bytes_received <= 0) {
-            printf("Connection closed!\n");
             close(sock);
             return;
         }
 
         // check correct header
         if (bytes_received != sizeof(actor_distributer_header_struct)) {
-            printf("Wrong header size!\n");
             continue;
         }
 
         // check quit flag
         if (header.quit == true) {
-            printf("Quit!\n");
             // close connection
             close(sock);
             break;
@@ -86,7 +84,6 @@ void actor_distributer_message_receive(actor_process_t self, int sock) {
 
         // check correct message length
         if (bytes_received != header.message_size) {
-            printf("Wrong message size!\n");
             continue;
         }
 
