@@ -15,8 +15,16 @@ typedef double actor_time_t;
 // node id
 typedef int actor_node_id_t;
 
-// Process Identifier
+// process id
 typedef int actor_process_id_t;
+
+// error
+// error type
+typedef int actor_error_t;
+
+// standart errors
+#define ACTOR_SUCCESS (0)
+#define ACTOR_FAILURE (-1)
 
 // actor includes
 #include "message.h"

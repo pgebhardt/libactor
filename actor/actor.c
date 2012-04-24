@@ -31,7 +31,21 @@ actor_process_id_t actor_process_spawn(actor_node_t node,
     // invoke new procces
     dispatch_async(dispatch_queue, ^ {
             // call process kernel
-            function(process);
+            actor_error_t result = function(process);
+
+            // on error send message to supervisor
+            if (result != ACTOR_SUCCESS) {
+                // create error message
+                actor_process_error_message_struct error_message;
+                error_message.nid = node->nid;
+                error_message.pid = process->pid;
+                error_message.error = result;
+
+                // send message
+                actor_message_send(process, process->supervisor_nid,
+                    process->supervisor_pid, &error_message,
+                    sizeof(actor_process_error_message_struct));
+            }
 
             // cleanup process
             actor_process_release(process);
@@ -46,6 +60,11 @@ actor_message_t actor_message_send(actor_process_t process, actor_node_id_t node
     actor_size_t size) {
     // check input
     if ((process == NULL) || (data == NULL)) {
+        return NULL;
+    }
+
+    // check ids
+    if ((dest_id < 0) || (node_id < 0)) {
         return NULL;
     }
 
