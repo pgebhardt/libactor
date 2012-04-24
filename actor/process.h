@@ -1,9 +1,6 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
-// Process Identifier
-typedef int actor_process_id_t;
-
 // Process struct
 typedef struct {
     actor_process_id_t pid;

@@ -10,43 +10,36 @@ void actor_distributer_message_send(actor_process_t self, int sock) {
     // create header
     actor_distributer_header_struct header;
 
+    // message pointer
+    actor_message_t message = NULL;
+
     // send loop
     while (true) {
         // get message
-        actor_message_t actor_message = actor_message_receive(self, 10.0);
+        message = actor_message_receive(self, 10.0);
 
         // check timeout
-        if (actor_message == NULL) {
+        if (message == NULL) {
             // quit connection
             header.quit = true;
             send(sock, &header, sizeof(actor_distributer_header_struct), 0);
+
             break;
         }
 
-        // get distributer message
-        actor_distributer_message_t distributer_message =
-            (actor_distributer_message_t)(actor_message->data);
-        printf("%p\n", distributer_message->message);
-
-        // get message to send
-        actor_message_data_t data = distributer_message->message->data;
-        printf("%p\n", data);
-
         // create header
-        header.dest_id = distributer_message->dest_id;
-        header.message_size = distributer_message->message->size;
+        header.dest_id = message->destination;
+        header.message_size = message->size;
         header.quit = false;
 
         // send header
         send(sock, &header, sizeof(actor_distributer_header_struct), 0);
 
         // send message
-        send(sock, data, distributer_message->message->size, 0);
+        send(sock, message->data, message->size, 0);
 
         // release message
-        // free(distributer_message);
-        // free(data);
-        // actor_message_release(actor_message);
+        actor_message_release(message);
     }
 
     // close connection

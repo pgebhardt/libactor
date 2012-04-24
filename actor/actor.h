@@ -12,6 +12,12 @@ typedef unsigned int actor_size_t;
 // time
 typedef double actor_time_t;
 
+// node id
+typedef int actor_node_id_t;
+
+// Process Identifier
+typedef int actor_process_id_t;
+
 // actor includes
 #include "message.h"
 #include "node.h"

@@ -26,7 +26,8 @@ void main_process(actor_process_t self) {
     }
 
     // send pong
-    actor_message_t pong = actor_message_send(self, client, 0, "Pong!", 6);
+    actor_message_t pong = actor_message_send(self, client, 0, "Blu", 4);
+    printf("%p\n", pong->data);
 
     // check success
     if (pong == NULL) {

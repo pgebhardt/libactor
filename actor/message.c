@@ -14,6 +14,7 @@ actor_message_t actor_message_create(actor_message_data_t const data,
 
     // init struct
     message->next = NULL;
+    message->destination = -1;
     message->size = size;
     message->data = NULL;
 

@@ -7,6 +7,7 @@ typedef void* actor_message_data_t;
 // message struct
 typedef struct {
     struct actor_message_struct* next;
+    actor_process_id_t destination;
     actor_size_t size;
     actor_message_data_t data;
 } actor_message_struct;

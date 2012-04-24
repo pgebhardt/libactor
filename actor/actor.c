@@ -10,7 +10,7 @@ actor_process_id_t actor_process_spawn(actor_node_t node,
     }
 
     // create process
-    __block actor_process_t process = actor_process_create(node);
+    actor_process_t process = actor_process_create(node);
 
     // check for success
     if (process == NULL) {
@@ -52,59 +52,47 @@ actor_message_t actor_message_send(actor_process_t process, actor_node_id_t node
 
     // create message
     actor_message_t message = actor_message_create(data, size);
-    printf("%p\n", message);
 
     // check success
     if (message == NULL) {
         return NULL;
     }
 
-    // check node id
+    // set message destination
+    message->destination = dest_id;
+
+    // destination message queue
+    actor_message_queue_t queue = NULL;
+
+    // check node if
     if (node_id == process->node->nid) {
-        // check for correct dest_id
-        if (dest_id >= process->node->message_queue_count) {
-            // cleanup
+        // get message queue
+        queue = actor_node_message_queue_get(process->node, dest_id);
+
+        // check success
+        if (queue == NULL) {
+            // release message
             actor_message_release(message);
 
             return NULL;
         }
-
-        // get destination message queue
-        actor_message_queue_t dest_queue = actor_node_message_queue_get(process->node,
-            dest_id);
-
-        // check for succes
-        if (dest_queue == NULL) {
-            // cleanup
-            actor_message_release(message);
-
-            return NULL;
-        }
-
-        // enqueue message
-        return actor_message_queue_put(dest_queue, message);
     }
-    // send message to remote
     else {
-        // check connected to remote
-        if (process->node->remote_nodes[node_id] == -1) {
-            // cleanup
+        // get remote node message queue
+        queue = actor_node_message_queue_get(process->node,
+            process->node->remote_nodes[node_id]);
+
+        // check success
+        if (queue == NULL) {
+            // release message
             actor_message_release(message);
 
             return NULL;
         }
-
-        // create distributer message
-        actor_distributer_message_struct distributer_message;
-        distributer_message.dest_id = dest_id;
-        distributer_message.message = message;
-
-        // send message
-        return actor_message_send(process, process->node->nid,
-            process->node->remote_nodes[node_id],
-            &distributer_message,
-            sizeof(actor_distributer_message_struct));
     }
+
+    // enqueue message
+    return actor_message_queue_put(queue, message);
 }
 
 // message receive
@@ -116,5 +104,12 @@ actor_message_t actor_message_receive(actor_process_t process,
     }
 
     // get message
-    return actor_message_queue_get(process->message_queue, timeout);
+    actor_message_t message = actor_message_queue_get(process->message_queue, timeout);
+
+    // check success
+    if (message == NULL) {
+        return NULL;
+    }
+
+    return message;
 }
