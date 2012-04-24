@@ -72,10 +72,10 @@ actor_node_t actor_node_create(actor_node_id_t id, actor_size_t size) {
     return node;
 }
 
-void actor_node_release(actor_node_t node) {
+actor_error_t actor_node_release(actor_node_t node) {
     // check for valid node
     if (node == NULL) {
-        return;
+        return ACTOR_FAILURE;
     }
 
     // wait for all processes to complete
@@ -107,6 +107,8 @@ void actor_node_release(actor_node_t node) {
 
     // free memory
     free(node);
+
+    return ACTOR_SUCCESS;
 }
 
 // get free message queue
@@ -189,10 +191,10 @@ actor_message_queue_t actor_node_message_queue_get(actor_node_t node,
 }
 
 // release message queue
-void actor_node_message_queue_release(actor_node_t node, actor_process_id_t pid) {
+actor_error_t actor_node_message_queue_release(actor_node_t node, actor_process_id_t pid) {
     // check for correct pid
     if (pid >= node->message_queue_count) {
-        return;
+        return ACTOR_FAILURE;
     }
 
     // release message queue
@@ -208,6 +210,8 @@ void actor_node_message_queue_release(actor_node_t node, actor_process_id_t pid)
     if (node->process_count == 0) {
         dispatch_semaphore_signal(node->process_semaphore);
     }
+
+    return ACTOR_SUCCESS;
 }
 
 // connect to remote node
@@ -223,7 +227,7 @@ actor_node_id_t actor_node_connect(actor_node_t node,
 }
 
 // listen for incomming connection
-actor_process_id_t actor_node_listen(actor_node_t node, unsigned int port) {
+actor_node_id_t actor_node_listen(actor_node_t node, unsigned int port) {
     // check for valid node
     if (node == NULL) {
         return -1;

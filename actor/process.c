@@ -1,27 +1,30 @@
 #include "actor.h"
 
 // create process
-actor_process_t actor_process_create(actor_node_t node) {
-    // check valid node
-    if (node == NULL) {
-        return NULL;
+actor_error_t actor_process_create(actor_node_t node, actor_process_t* process_pointer) {
+    // check valid input
+    if ((node == NULL) || (process_pointer == NULL)) {
+        return ACTOR_FAILURE;
     }
+
+    // init process pointer to NULL
+    *process_pointer = NULL;
 
     // create process struct
     actor_process_t process = malloc(sizeof(actor_process_struct));
 
     // check success
     if (process == NULL) {
-        return NULL;
+        return ACTOR_FAILURE;
     }
 
     // init struct
-    process->pid = -1;
+    process->pid = ACTOR_INVALID_ID;
     process->message_queue = NULL;
     process->sleep_semaphore = NULL;
     process->node = node;
-    process->supervisor_nid = -1;
-    process->supervisor_pid = -1;
+    process->supervisor_nid = ACTOR_INVALID_ID;
+    process->supervisor_pid = ACTOR_INVALID_ID;
 
     // create sleep semaphore
     process->sleep_semaphore = dispatch_semaphore_create(0);
@@ -31,7 +34,7 @@ actor_process_t actor_process_create(actor_node_t node) {
         // release process
         actor_process_release(process);
 
-        return NULL;
+        return ACTOR_FAILURE;
     }
 
     // get free message queue
@@ -42,10 +45,13 @@ actor_process_t actor_process_create(actor_node_t node) {
         // release process
         actor_process_release(process);
 
-        return NULL;
+        return ACTOR_FAILURE;
     }
 
-    return process;
+    // set process pointer
+    *process_pointer = process;
+
+    return ACTOR_SUCCESS;
 }
 
 actor_error_t actor_process_release(actor_process_t process) {

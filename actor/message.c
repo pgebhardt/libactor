@@ -35,10 +35,10 @@ actor_message_t actor_message_create(actor_message_data_t const data,
     return message;
 }
 
-void actor_message_release(actor_message_t message) {
+actor_error_t actor_message_release(actor_message_t message) {
     // check for valid message
     if (message == NULL) {
-        return;
+        return ACTOR_FAILURE;
     }
 
     // free message data
@@ -48,6 +48,8 @@ void actor_message_release(actor_message_t message) {
 
     // free memory
     free(message);
+
+    return ACTOR_SUCCESS;
 }
 
 // create new queue

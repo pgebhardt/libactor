@@ -27,13 +27,13 @@ actor_message_t actor_message_create(actor_message_data_t const data,
     actor_size_t size);
 
 // cleanup message
-void actor_message_release(actor_message_t message);
+actor_error_t actor_message_release(actor_message_t message);
 
 // create new queue
 actor_message_queue_t actor_message_queue_create();
 
 // cleanup queue
-void actor_message_queue_release(actor_message_queue_t queue);
+actor_error_t actor_message_queue_release(actor_message_queue_t queue);
 
 // add new message to queue
 actor_message_t actor_message_queue_put(actor_message_queue_t queue,

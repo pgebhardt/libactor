@@ -1,19 +1,22 @@
 #include "actor.h"
 
 // spawn process
-actor_process_id_t actor_process_spawn(actor_node_t node,
+actor_error_t actor_process_spawn(actor_node_t node, actor_process_id_t* pid,
     actor_process_function_t function) {
     // check for valid node
     if (node == NULL) {
-        return -1;
+        return ACTOR_FAILURE;
+    }
+
+    // init pid to invalid
+    if (pid != NULL) {
+        *pid = ACTOR_INVALID_ID;
     }
 
     // create process
-    actor_process_t process = actor_process_create(node);
-
-    // check for success
-    if (process == NULL) {
-        return -1;
+    actor_process_t process = NULL;
+    if (actor_process_create(node, &process) != ACTOR_SUCCESS) {
+        return ACTOR_FAILURE;
     }
 
     // get dispatch queue
@@ -25,7 +28,7 @@ actor_process_id_t actor_process_spawn(actor_node_t node,
         // cleanup
         actor_process_release(process);
 
-        return -1;
+        return ACTOR_FAILURE;
     }
 
     // invoke new procces
@@ -51,7 +54,12 @@ actor_process_id_t actor_process_spawn(actor_node_t node,
             actor_process_release(process);
         });
 
-    return process->pid;
+    // set pid
+    if (pid != NULL) {
+        *pid = process->pid;
+    }
+
+    return ACTOR_SUCCESS;
 }
 
 // message sendig

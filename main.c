@@ -3,7 +3,9 @@
 
 actor_error_t main_process(actor_process_t main) {
     // start dummy process
-    actor_process_id_t pid = actor_process_spawn(main->node, ^(actor_process_t self) {
+    actor_process_id_t pid;
+    actor_error_t err = actor_process_spawn(main->node, &pid,
+        ^actor_error_t(actor_process_t self) {
             // link to main
             actor_process_link(self, main->node->nid, main->pid);
 
@@ -36,7 +38,7 @@ int main(int argc, char* argv[]) {
     actor_node_t node = actor_node_create(0, 1000);
 
     // spawn main process
-    actor_process_spawn(node, ^actor_error_t(actor_process_t self) {
+    actor_process_spawn(node, NULL, ^actor_error_t(actor_process_t self) {
             return main_process(self);
         });
 
