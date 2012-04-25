@@ -66,9 +66,9 @@ actor_error_t actor_process_spawn(actor_node_t node, actor_process_id_t* pid,
 }
 
 // message sendig
-actor_error_t actor_message_send(actor_process_t process, actor_node_id_t node_id,
-    actor_process_id_t dest_id, actor_message_data_t const data,
-    actor_size_t size) {
+actor_error_t actor_message_send(actor_process_t process,
+    actor_node_id_t destination_nid, actor_process_id_t destination_pid,
+    actor_message_data_t const data, actor_size_t size) {
     // check input
     if ((process == NULL) || (data == NULL)) {
         return ACTOR_ERROR_INVALUE;
@@ -78,7 +78,7 @@ actor_error_t actor_message_send(actor_process_t process, actor_node_id_t node_i
     actor_error_t error = ACTOR_SUCCESS;
 
     // check ids
-    if ((dest_id < 0) || (node_id < 0)) {
+    if ((destination_nid < 0) || (destination_pid < 0)) {
         return ACTOR_ERROR_INVALUE;
     }
 
@@ -89,15 +89,16 @@ actor_error_t actor_message_send(actor_process_t process, actor_node_id_t node_i
     }
 
     // set message destination
-    message->destination = dest_id;
+    message->destination_nid = destination_nid;
+    message->destination_pid = destination_pid;
 
     // destination message queue
     actor_message_queue_t queue = NULL;
 
-    // check node if
-    if (node_id == process->node->nid) {
+    // check node id
+    if (destination_nid == process->node->nid) {
         // get message queue
-        error = actor_node_get_message_queue(process->node, &queue, dest_id);
+        error = actor_node_get_message_queue(process->node, &queue, destination_pid);
 
         // check success
         if (error != ACTOR_SUCCESS) {
@@ -110,7 +111,7 @@ actor_error_t actor_message_send(actor_process_t process, actor_node_id_t node_i
     else {
         // get remote node message queue
         error = actor_node_get_message_queue(process->node, &queue,
-            process->node->remote_nodes[node_id]);
+            process->node->remote_nodes[destination_nid]);
 
         // check success
         if (error != ACTOR_SUCCESS) {
