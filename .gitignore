@@ -4,3 +4,4 @@ test
 *.a
 client
 server
+supervisor
