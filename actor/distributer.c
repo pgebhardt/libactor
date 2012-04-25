@@ -233,9 +233,11 @@ actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
 
     // check success
     if ((bytes_received != sizeof(actor_node_id_t)) ||
-        (node->remote_nodes[node_id] != -1)){
+        (node->remote_nodes[node_id] != ACTOR_INVALID_ID) ||
+        (node_id == node->nid)){
         // close connection
         close(connected);
+
         return ACTOR_ERROR_NETWORK;
     }
 
@@ -253,5 +255,10 @@ actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
     // save connector
     node->remote_nodes[node_id] = sender;
 
-    return node_id;
+    // set node id
+    if (nid != NULL) {
+        *nid = node_id;
+    }
+
+    return ACTOR_SUCCESS;
 }
