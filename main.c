@@ -82,10 +82,13 @@ actor_error_t main_process(actor_process_t main) {
             return ACTOR_SUCCESS;
         });
 
+    // error
+    actor_error_t error = ACTOR_SUCCESS;
+
     // start ping pong several times
     for (int i = 0; i < 10; i++) {
         // start ping process
-        actor_process_spawn(main->node, NULL, ^actor_error_t(actor_process_t self) {
+        error = actor_process_spawn(main->node, NULL, ^actor_error_t(actor_process_t self) {
                 // link to supervisor
                 actor_process_link(self, self->node->nid, supervisor);
 
@@ -93,8 +96,10 @@ actor_error_t main_process(actor_process_t main) {
                 return ping_function(self);
             });
 
+        printf("%d\n", error);
+
         // sleep
-        actor_process_sleep(main, 2.0);
+        // actor_process_sleep(main, 2.0);
     }
 
     return ACTOR_SUCCESS;
