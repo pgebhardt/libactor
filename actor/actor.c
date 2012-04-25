@@ -18,8 +18,11 @@ actor_error_t actor_process_spawn(actor_node_t node, actor_process_id_t* pid,
 
     // create process
     actor_process_t process = NULL;
-    if (actor_process_create(node, &process) != ACTOR_SUCCESS) {
-        return ACTOR_ERROR_MEMORY;
+    error = actor_process_create(node, &process);
+
+    // check success
+    if (error != ACTOR_SUCCESS) {
+        return error;
     }
 
     // get dispatch queue
