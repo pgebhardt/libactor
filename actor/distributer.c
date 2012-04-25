@@ -298,6 +298,10 @@ actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
         return ACTOR_ERROR_NETWORK;
     }
 
+    // set socket opts
+    int yes = 1;
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+
     // create server address struct
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
