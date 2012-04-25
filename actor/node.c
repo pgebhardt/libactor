@@ -224,7 +224,7 @@ actor_error_t actor_node_get_message_queue(actor_node_t node,
 actor_error_t actor_node_message_queue_release(actor_node_t node,
     actor_process_id_t pid) {
     // check for correct pid
-    if (pid >= node->message_queue_count) {
+    if ((pid >= node->message_queue_count) || (pid < 0)) {
         return ACTOR_ERROR_INVALUE;
     }
 

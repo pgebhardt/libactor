@@ -11,9 +11,8 @@ typedef unsigned int actor_error_t;
 #define ACTOR_ERROR_MEMORY              (3)
 #define ACTOR_ERROR_TIMEOUT             (4)
 #define ACTOR_ERROR_DISPATCH            (5)
-#define ACTOR_ERROR_NODEID              (6)
-#define ACTOR_ERROR_PROCESSID           (7)
-#define ACTOR_ERROR_TOO_MANY_PROCESSES  (8)
-#define ACTOR_ERROR_NETWORK             (9)
+#define ACTOR_ERROR_TOO_MANY_PROCESSES  (6)
+#define ACTOR_ERROR_NETWORK             (7)
+#define ACTOR_ERROR_MESSAGE_PASSING     (8)
 
 #endif

@@ -198,6 +198,14 @@ actor_error_t actor_message_queue_get(actor_message_queue_t queue,
     // get message
     actor_message_t newMessage = queue->first;
 
+    // check message
+    if (newMessage == NULL) {
+        // signal read write access
+        dispatch_semaphore_signal(queue->semaphore_read_write);
+
+        return ACTOR_ERROR_MESSAGE_PASSING;
+    }
+
     // set new first message to next
     queue->first = (actor_message_t)newMessage->next;
 
