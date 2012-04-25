@@ -39,19 +39,16 @@ actor_error_t actor_process_spawn(actor_node_t node, actor_process_id_t* pid,
             // call process kernel
             actor_error_t result = function(process);
 
-            // send error to supervisor
-            if (result != ACTOR_SUCCESS) {
-                // create error message
-                actor_process_error_message_struct error_message;
-                error_message.nid = node->nid;
-                error_message.pid = process->pid;
-                error_message.error = result;
+            // create error message
+            actor_process_error_message_struct error_message;
+            error_message.nid = node->nid;
+            error_message.pid = process->pid;
+            error_message.error = result;
 
-                // send message
-                actor_message_send(process, process->supervisor_nid,
-                    process->supervisor_pid, &error_message,
-                    sizeof(actor_process_error_message_struct));
-            }
+            // send message
+            actor_message_send(process, process->supervisor_nid,
+                process->supervisor_pid, &error_message,
+                sizeof(actor_process_error_message_struct));
 
             // cleanup process
             actor_process_release(process);
