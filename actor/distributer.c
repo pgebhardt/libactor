@@ -105,7 +105,7 @@ actor_error_t actor_distributer_connection_supervisor(actor_process_t self,
             continue;
         }
 
-        // cast ro error message
+        // cast to error message
         actor_process_error_message_t error_message =
             (actor_process_error_message_t)message->data;
 
