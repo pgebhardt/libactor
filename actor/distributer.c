@@ -11,6 +11,9 @@ actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
     // create header
     actor_distributer_header_struct header;
 
+    // error
+    actor_error_t error = ACTOR_SUCCESS;
+
     // message pointer
     actor_message_t message = NULL;
 
@@ -18,21 +21,16 @@ actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
     while (true) {
         // get message
         actor_message_t message = NULL;
-        if (actor_message_receive(self, &message, 10.0) != ACTOR_SUCCESS) {
-            // quit connection
-            header.quit = true;
-            send(sock, &header, sizeof(actor_distributer_header_struct), 0);
+        error = actor_message_receive(self, &message, 10.0);
 
-            // close socket
-            close(sock);
-
-            return ACTOR_ERROR_TIMEOUT;
+        // check error
+        if (error != ACTOR_SUCCESS) {
+            return error;
         }
 
         // create header
-        header.dest_id = message->destination;
+        header.dest_id = message->destination_pid;
         header.message_size = message->size;
-        header.quit = false;
 
         // send header
         send(sock, &header, sizeof(actor_distributer_header_struct), 0);
@@ -43,9 +41,6 @@ actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
         // release message
         actor_message_release(message);
     }
-
-    // close connection
-    close(sock);
 
     return ACTOR_SUCCESS;
 }
@@ -63,20 +58,12 @@ actor_error_t actor_distributer_message_receive(actor_process_t self, int sock) 
 
         // check for closed connection
         if (bytes_received <= 0) {
-            close(sock);
             return ACTOR_ERROR_NETWORK;
         }
 
         // check correct header
         if (bytes_received != sizeof(actor_distributer_header_struct)) {
             continue;
-        }
-
-        // check quit flag
-        if (header.quit == true) {
-            // close connection
-            close(sock);
-            break;
         }
 
         // create message buffer
@@ -87,6 +74,9 @@ actor_error_t actor_distributer_message_receive(actor_process_t self, int sock) 
 
         // check correct message length
         if (bytes_received != header.message_size) {
+            // free data
+            free(data);
+
             continue;
         }
 
@@ -97,6 +87,119 @@ actor_error_t actor_distributer_message_receive(actor_process_t self, int sock) 
         // free message buffer
         free(data);
     }
+
+    return ACTOR_SUCCESS;
+}
+
+// connection supervisor
+actor_error_t actor_distributer_connection_supervisor(actor_process_t self,
+    actor_node_id_t remote_node, int sock) {
+    // start send process
+    actor_process_id_t sender = ACTOR_INVALID_ID;
+
+    // loop
+    while (true) {
+        // receive error message
+        actor_message_t message = NULL;
+        if (actor_message_receive(self, &message, 10.0) != ACTOR_SUCCESS) {
+            continue;
+        }
+
+        // cast ro error message
+        actor_process_error_message_t error_message =
+            (actor_process_error_message_t)message->data;
+
+        // check error message
+        if (error_message->error == ACTOR_ERROR_TIMEOUT) {
+            // restart sender
+            actor_error_t error = actor_process_spawn(self->node, &sender,
+                ^actor_error_t(actor_process_t s) {
+                    // set self as supervisor
+                    actor_process_link(s, self->node->nid, self->pid);
+
+                    // start send process
+                    return actor_distributer_message_send(s, sock);
+                });
+
+            // set new connector
+            self->node->remote_nodes[remote_node] = sender;
+        }
+        else {
+            // release message
+            actor_message_release(message);
+
+            break;
+        }
+
+        // release message
+        actor_message_release(message);
+    }
+
+    // close connection
+    close(sock);
+
+    // invalid connection
+    self->node->remote_nodes[remote_node] = ACTOR_INVALID_ID;
+
+    return ACTOR_SUCCESS;
+}
+
+actor_error_t actor_distributer_start_connectors(actor_node_t node,
+    actor_node_id_t remote_node, int sock) {
+    // check input
+    if (node == NULL) {
+        return ACTOR_ERROR_INVALUE;
+    }
+
+    // error
+    actor_error_t error = ACTOR_SUCCESS;
+
+    // start connection supervisor
+    actor_process_id_t supervisor = ACTOR_INVALID_ID;
+    error = actor_process_spawn(node, &supervisor,
+        ^actor_error_t(actor_process_t self) {
+            return actor_distributer_connection_supervisor(self, remote_node, sock);
+        });
+
+    // check success
+    if (error != ACTOR_SUCCESS) {
+        return error;
+    }
+
+    // start receive process
+    actor_process_id_t receiver = ACTOR_INVALID_ID;
+    error = actor_process_spawn(node, &receiver,
+        ^actor_error_t(actor_process_t s) {
+            // set self as supervisor
+            actor_process_link(s, s->node->nid, supervisor);
+
+            // start receive process
+            return actor_distributer_message_receive(s, sock);
+        });
+
+    // check success
+    if (error != ACTOR_SUCCESS) {
+        return error;
+    }
+
+    // start send process
+    actor_process_id_t sender = ACTOR_INVALID_ID;
+    error = actor_process_spawn(node, &sender,
+        ^actor_error_t(actor_process_t s) {
+            // set self as supervisor
+            actor_process_link(s, s->node->nid, supervisor);
+
+            // start send process
+            return actor_distributer_message_send(s, sock);
+        });
+
+    // check success
+    if (error != ACTOR_SUCCESS) {
+        return error;
+    }
+
+    // init sender as connector
+    node->remote_nodes[remote_node] = sender;
 
     return ACTOR_SUCCESS;
 }
@@ -154,20 +257,16 @@ actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id
         return ACTOR_ERROR_NETWORK;
     }
 
-    // create send process
-    actor_process_id_t sender = ACTOR_INVALID_ID;
-    actor_process_spawn(node, &sender,
-        ^actor_error_t(actor_process_t self) {
-            return actor_distributer_message_send(self, sock);
-        });
+    // start connectors
+    actor_error_t error = actor_distributer_start_connectors(node, node_id, sock);
 
-    // create receive process
-    actor_process_spawn(node, NULL, ^actor_error_t(actor_process_t self) {
-            return actor_distributer_message_receive(self, sock);
-        });
+    // check success
+    if (error != ACTOR_SUCCESS) {
+        // close connection
+        close(sock);
 
-    // save connector
-    node->remote_nodes[node_id] = sender;
+        return error;
+    }
 
     // set node id
     if (nid != NULL) {
@@ -241,19 +340,16 @@ actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
         return ACTOR_ERROR_NETWORK;
     }
 
-    // create send process
-    actor_process_id_t sender = ACTOR_INVALID_ID;
-    actor_process_spawn(node, &sender, ^actor_error_t(actor_process_t self) {
-            return actor_distributer_message_send(self, connected);
-        });
+    // start connectors
+    actor_error_t error = actor_distributer_start_connectors(node, node_id, connected);
 
-    // create receive process
-    actor_process_spawn(node, NULL, ^actor_error_t(actor_process_t self) {
-            return actor_distributer_message_receive(self, connected);
-        });
+    // check success
+    if (error != ACTOR_SUCCESS) {
+        // close connection
+        close(connected);
 
-    // save connector
-    node->remote_nodes[node_id] = sender;
+        return error;
+    }
 
     // set node id
     if (nid != NULL) {
