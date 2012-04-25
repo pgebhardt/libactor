@@ -160,7 +160,10 @@ actor_error_t actor_node_get_free_message_queue(actor_node_t node,
         }
 
         // check new id
-        if (id >= node->message_queue_pos) {
+        if (id == node->message_queue_pos) {
+            // release message queue create access
+            dispatch_semaphore_signal(node->message_queue_create_semaphore);
+
             return ACTOR_ERROR_TOO_MANY_PROCESSES;
         }
 
@@ -182,6 +185,9 @@ actor_error_t actor_node_get_free_message_queue(actor_node_t node,
 
     // check success
     if (error != ACTOR_SUCCESS) {
+        // release message queue create access
+        dispatch_semaphore_signal(node->message_queue_create_semaphore);
+
         return error;
     }
 
