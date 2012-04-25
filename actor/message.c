@@ -22,7 +22,8 @@ actor_error_t actor_message_create(actor_message_t* message,
 
     // init struct
     newMessage->next = NULL;
-    newMessage->destination = -1;
+    newMessage->destination_nid = ACTOR_INVALID_ID;
+    newMessage->destination_pid = ACTOR_INVALID_ID;
     newMessage->size = size;
     newMessage->data = NULL;
 
