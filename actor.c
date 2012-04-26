@@ -50,7 +50,7 @@ actor_error_t actor_process_spawn(actor_node_t node, actor_process_id_t* pid,
 
             // send message
             actor_message_send(process, process->supervisor_nid,
-                process->supervisor_pid, &error_message,
+                process->supervisor_pid, ACTOR_TYPE_ERROR_MESSAGE, &error_message,
                 sizeof(actor_process_error_message_s));
 
             // cleanup process
@@ -68,9 +68,9 @@ actor_error_t actor_process_spawn(actor_node_t node, actor_process_id_t* pid,
 // message sendig
 actor_error_t actor_message_send(actor_process_t process,
     actor_node_id_t destination_nid, actor_process_id_t destination_pid,
-    actor_message_data_t const data, actor_size_t size) {
+    actor_data_type_t type, actor_message_data_t const data, actor_size_t size) {
     // check input
-    if ((process == NULL) || (data == NULL)) {
+    if ((process == NULL) || (data == NULL) || (type < 0)) {
         return ACTOR_ERROR_INVALUE;
     }
 
@@ -84,7 +84,7 @@ actor_error_t actor_message_send(actor_process_t process,
 
     // create message
     actor_message_t message = NULL;
-    if (actor_message_create(&message, data, size) != ACTOR_SUCCESS) {
+    if (actor_message_create(&message, type, data, size) != ACTOR_SUCCESS) {
         return ACTOR_ERROR_MEMORY;
     }
 

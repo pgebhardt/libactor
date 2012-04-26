@@ -3,9 +3,9 @@
 
 // create new message
 actor_error_t actor_message_create(actor_message_t* message,
-    actor_message_data_t const data, actor_size_t size) {
-    // check valid message pointer
-    if (message == NULL) {
+    actor_data_type_t type, actor_message_data_t const data, actor_size_t size) {
+    // check input
+    if ((message == NULL) || (type < 0) || (data == NULL)) {
         return ACTOR_ERROR_INVALUE;
     }
 
@@ -26,6 +26,7 @@ actor_error_t actor_message_create(actor_message_t* message,
     newMessage->destination_pid = ACTOR_INVALID_ID;
     newMessage->size = size;
     newMessage->data = NULL;
+    newMessage->type = type;
 
     // create message data memory
     newMessage->data = malloc(size);

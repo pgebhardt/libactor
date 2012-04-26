@@ -31,6 +31,7 @@ actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
         // create header
         header.dest_id = message->destination_pid;
         header.message_size = message->size;
+        header.type = message->type;
 
         // send header
         send(sock, &header, sizeof(actor_distributer_header_s), 0);
@@ -82,7 +83,7 @@ actor_error_t actor_distributer_message_receive(actor_process_t self, int sock) 
 
         // send message
         actor_message_send(self, self->node->nid, header.dest_id,
-            data, header.message_size);
+            header.type, data, header.message_size);
 
         // free message buffer
         free(data);

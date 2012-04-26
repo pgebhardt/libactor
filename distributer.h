@@ -5,6 +5,7 @@
 typedef struct {
     actor_process_id_t dest_id;
     actor_size_t message_size;
+    actor_data_type_t type;
 } actor_distributer_header_s;
 typedef actor_distributer_header_s* actor_distributer_header_t;
 

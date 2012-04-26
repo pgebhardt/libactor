@@ -11,6 +11,7 @@ typedef struct {
     actor_process_id_t destination_pid;
     actor_size_t size;
     actor_message_data_t data;
+    actor_data_type_t type;
 } actor_message_s;
 typedef actor_message_s* actor_message_t;
 
@@ -25,7 +26,7 @@ typedef actor_message_queue_s* actor_message_queue_t;
 
 // create new message
 actor_error_t actor_message_create(actor_message_t* message,
-    actor_message_data_t const data, actor_size_t size);
+    actor_data_type_t type, actor_message_data_t const data, actor_size_t size);
 
 // cleanup message
 actor_error_t actor_message_release(actor_message_t message);
