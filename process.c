@@ -14,7 +14,7 @@ actor_error_t actor_process_create(actor_node_t node, actor_process_t* process) 
     *process = NULL;
 
     // create process struct
-    actor_process_t newProcess = malloc(sizeof(actor_process_struct));
+    actor_process_t newProcess = malloc(sizeof(actor_process_s));
 
     // check success
     if (newProcess == NULL) {

@@ -43,7 +43,7 @@ actor_error_t actor_process_spawn(actor_node_t node, actor_process_id_t* pid,
             actor_error_t result = function(process);
 
             // create error message
-            actor_process_error_message_struct error_message;
+            actor_process_error_message_s error_message;
             error_message.nid = node->nid;
             error_message.pid = process->pid;
             error_message.error = result;
@@ -51,7 +51,7 @@ actor_error_t actor_process_spawn(actor_node_t node, actor_process_id_t* pid,
             // send message
             actor_message_send(process, process->supervisor_nid,
                 process->supervisor_pid, &error_message,
-                sizeof(actor_process_error_message_struct));
+                sizeof(actor_process_error_message_s));
 
             // cleanup process
             actor_process_release(process);

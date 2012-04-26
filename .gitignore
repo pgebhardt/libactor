@@ -1,7 +1,5 @@
 *.swp
-test
 *.o
 *.a
-client
-server
-supervisor
+test.c
+test

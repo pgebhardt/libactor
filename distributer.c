@@ -9,7 +9,7 @@
 // message send process
 actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
     // create header
-    actor_distributer_header_struct header;
+    actor_distributer_header_s header;
 
     // error
     actor_error_t error = ACTOR_SUCCESS;
@@ -33,7 +33,7 @@ actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
         header.message_size = message->size;
 
         // send header
-        send(sock, &header, sizeof(actor_distributer_header_struct), 0);
+        send(sock, &header, sizeof(actor_distributer_header_s), 0);
 
         // send message
         send(sock, message->data, message->size, 0);
@@ -48,13 +48,13 @@ actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
 // message receive process
 actor_error_t actor_distributer_message_receive(actor_process_t self, int sock) {
     int bytes_received;
-    actor_distributer_header_struct header;
+    actor_distributer_header_s header;
 
     // get messages
     while (true) {
         // receive header
         bytes_received = recv(sock, &header,
-            sizeof(actor_distributer_header_struct), 0);
+            sizeof(actor_distributer_header_s), 0);
 
         // check for closed connection
         if (bytes_received <= 0) {
@@ -62,7 +62,7 @@ actor_error_t actor_distributer_message_receive(actor_process_t self, int sock) 
         }
 
         // check correct header
-        if (bytes_received != sizeof(actor_distributer_header_struct)) {
+        if (bytes_received != sizeof(actor_distributer_header_s)) {
             continue;
         }
 

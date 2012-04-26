@@ -13,7 +13,7 @@ actor_error_t actor_message_create(actor_message_t* message,
     *message = NULL;
 
     // create message
-    actor_message_t newMessage = malloc(sizeof(actor_message_struct));
+    actor_message_t newMessage = malloc(sizeof(actor_message_s));
 
     // check success
     if (newMessage == NULL) {
@@ -75,7 +75,7 @@ actor_error_t actor_message_queue_create(actor_message_queue_t* queue) {
     *queue = NULL;
 
     // create new message struct
-    actor_message_queue_t newQueue = malloc(sizeof(actor_message_queue_struct));
+    actor_message_queue_t newQueue = malloc(sizeof(actor_message_queue_s));
 
     // check success
     if (newQueue == NULL) {
@@ -158,7 +158,7 @@ actor_error_t actor_message_queue_put(actor_message_queue_t queue,
     }
     else {
         // set new message as last
-        queue->last->next = (struct actor_message_struct*)message;
+        queue->last->next = (struct actor_message_s*)message;
         queue->last = message;
         message->next = NULL;
     }

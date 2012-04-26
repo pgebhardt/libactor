@@ -12,7 +12,7 @@ actor_error_t actor_node_create(actor_node_t* node, actor_node_id_t id,
     *node = NULL;
 
     // create node
-    actor_node_t newNode = malloc(sizeof(actor_node_struct));
+    actor_node_t newNode = malloc(sizeof(actor_node_s));
 
     // check success
     if (newNode == NULL) {

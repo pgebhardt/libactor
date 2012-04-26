@@ -6,13 +6,13 @@ typedef void* actor_message_data_t;
 
 // message struct
 typedef struct {
-    struct actor_message_struct* next;
+    struct actor_message_s* next;
     actor_node_id_t destination_nid;
     actor_process_id_t destination_pid;
     actor_size_t size;
     actor_message_data_t data;
-} actor_message_struct;
-typedef actor_message_struct* actor_message_t;
+} actor_message_s;
+typedef actor_message_s* actor_message_t;
 
 // message queue
 typedef struct {
@@ -20,8 +20,8 @@ typedef struct {
     dispatch_semaphore_t semaphore_messages;
     actor_message_t first;
     actor_message_t last;
-} actor_message_queue_struct;
-typedef actor_message_queue_struct* actor_message_queue_t;
+} actor_message_queue_s;
+typedef actor_message_queue_s* actor_message_queue_t;
 
 // create new message
 actor_error_t actor_message_create(actor_message_t* message,

@@ -9,16 +9,16 @@ typedef struct {
     actor_node_t node;
     actor_node_id_t supervisor_nid;
     actor_process_id_t supervisor_pid;
-} actor_process_struct;
-typedef actor_process_struct* actor_process_t;
+} actor_process_s;
+typedef actor_process_s* actor_process_t;
 
 // process error message
 typedef struct {
     actor_node_id_t nid;
     actor_process_id_t pid;
     actor_error_t error;
-} actor_process_error_message_struct;
-typedef actor_process_error_message_struct* actor_process_error_message_t;
+} actor_process_error_message_s;
+typedef actor_process_error_message_s* actor_process_error_message_t;
 
 // Process block signature
 typedef actor_error_t (^actor_process_function_t)(actor_process_t const self);

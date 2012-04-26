@@ -11,8 +11,8 @@ typedef struct {
     dispatch_semaphore_t process_semaphore;
     dispatch_semaphore_t message_queue_create_semaphore;
     actor_size_t process_count;
-} actor_node_struct;
-typedef actor_node_struct* actor_node_t;
+} actor_node_s;
+typedef actor_node_s* actor_node_t;
 
 #include "process.h"
 
