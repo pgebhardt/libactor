@@ -31,3 +31,7 @@ To build the example on OS X type:
     make
     clang -fblocks -o example example.c -L. -lactor
     ./example
+
+## To be continued
+
+More precise documentation will come...
