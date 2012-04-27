@@ -39,23 +39,23 @@ actor_error_t actor_process_spawn(actor_node_t node, actor_process_id_t* pid,
 
     // invoke new procces
     dispatch_async(dispatch_queue, ^ {
-            // call process kernel
-            actor_error_t result = function(process);
+        // call process kernel
+        actor_error_t result = function(process);
 
-            // create error message
-            actor_process_error_message_s error_message;
-            error_message.nid = process->nid;
-            error_message.pid = process->pid;
-            error_message.error = result;
+        // create error message
+        actor_process_error_message_s error_message;
+        error_message.nid = process->nid;
+        error_message.pid = process->pid;
+        error_message.error = result;
 
-            // send message
-            actor_message_send(process, process->supervisor_nid,
-                process->supervisor_pid, ACTOR_TYPE_ERROR_MESSAGE, &error_message,
-                sizeof(actor_process_error_message_s));
+        // send message
+        actor_message_send(process, process->supervisor_nid,
+            process->supervisor_pid, ACTOR_TYPE_ERROR_MESSAGE, &error_message,
+            sizeof(actor_process_error_message_s));
 
-            // cleanup process
-            actor_process_release(process);
-        });
+        // cleanup process
+        actor_process_release(process);
+    });
 
     // set pid
     if (pid != NULL) {
