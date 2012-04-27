@@ -28,6 +28,6 @@ Currently the included makefile works for OS X. On linux or bsd you need to add 
 
 To build the example on OS X type:
 
-make
-clang -fblocks -o example example.c -L. -lactor
-./example
+    make
+    clang -fblocks -o example example.c -L. -lactor
+    ./example
