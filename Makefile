@@ -4,5 +4,5 @@ libactor: actor.c actor.h message.c message.h process.c process.h node.c node.h 
 	ranlib libactor.a
 	rm actor.o message.o process.o node.o distributer.o
 
-test: test.c
+test: test.c libactor.a
 	clang -o test test.c -fblocks -L. -lactor
