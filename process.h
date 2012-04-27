@@ -3,12 +3,13 @@
 
 // Process struct
 typedef struct {
-    actor_process_id_t pid;
-    actor_message_queue_t message_queue;
-    dispatch_semaphore_t sleep_semaphore;
+    actor_process_id_t nid;
+    actor_node_id_t pid;
     actor_node_t node;
     actor_node_id_t supervisor_nid;
     actor_process_id_t supervisor_pid;
+    actor_message_queue_t message_queue;
+    dispatch_semaphore_t sleep_semaphore;
 } actor_process_s;
 typedef actor_process_s* actor_process_t;
 

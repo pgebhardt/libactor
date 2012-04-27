@@ -20,7 +20,7 @@ actor_error_t actor_node_create(actor_node_t* node, actor_node_id_t id,
     }
 
     // init struct
-    newNode->nid = id;
+    newNode->id = id;
     newNode->message_queues = NULL;
     newNode->remote_nodes = NULL;
     newNode->message_queue_count = size;

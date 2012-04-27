@@ -82,7 +82,7 @@ actor_error_t actor_distributer_message_receive(actor_process_t self, int sock) 
         }
 
         // send message
-        actor_message_send(self, self->node->nid, header.dest_id,
+        actor_message_send(self, self->nid, header.dest_id,
             header.type, data, header.message_size);
 
         // free message buffer
@@ -116,7 +116,7 @@ actor_error_t actor_distributer_connection_supervisor(actor_process_t self,
             actor_error_t error = actor_process_spawn(self->node, &sender,
                 ^actor_error_t(actor_process_t s) {
                     // set self as supervisor
-                    actor_process_link(s, self->node->nid, self->pid);
+                    actor_process_link(s, self->nid, self->pid);
 
                     // start send process
                     return actor_distributer_message_send(s, sock);
@@ -172,7 +172,7 @@ actor_error_t actor_distributer_start_connectors(actor_node_t node,
     error = actor_process_spawn(node, &receiver,
         ^actor_error_t(actor_process_t s) {
             // set self as supervisor
-            actor_process_link(s, s->node->nid, supervisor);
+            actor_process_link(s, s->nid, supervisor);
 
             // start receive process
             return actor_distributer_message_receive(s, sock);
@@ -188,7 +188,7 @@ actor_error_t actor_distributer_start_connectors(actor_node_t node,
     error = actor_process_spawn(node, &sender,
         ^actor_error_t(actor_process_t s) {
             // set self as supervisor
-            actor_process_link(s, s->node->nid, supervisor);
+            actor_process_link(s, s->nid, supervisor);
 
             // start send process
             return actor_distributer_message_send(s, sock);
@@ -244,7 +244,7 @@ actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id
     }
 
     // send node id
-    send(sock, &node->nid, sizeof(actor_node_id_t), 0);
+    send(sock, &node->id, sizeof(actor_node_id_t), 0);
 
     // get node id
     actor_node_id_t node_id;
@@ -252,7 +252,8 @@ actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id
 
     // check success
     if ((bytes_received != sizeof(actor_node_id_t)) ||
-        (node->remote_nodes[node_id] != ACTOR_INVALID_ID)) {
+        (node->remote_nodes[node_id] != ACTOR_INVALID_ID) ||
+        (node_id == node->id)) {
         // close connection
         close(sock);
         return ACTOR_ERROR_NETWORK;
@@ -329,7 +330,7 @@ actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
     close(sock);
 
     // send node id
-    send(connected, &node->nid, sizeof(actor_node_id_t), 0);
+    send(connected, &node->id, sizeof(actor_node_id_t), 0);
 
     // get node id
     actor_node_id_t node_id;
@@ -338,7 +339,7 @@ actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
     // check success
     if ((bytes_received != sizeof(actor_node_id_t)) ||
         (node->remote_nodes[node_id] != ACTOR_INVALID_ID) ||
-        (node_id == node->nid)){
+        (node_id == node->id)){
         // close connection
         close(connected);
 

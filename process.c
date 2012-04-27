@@ -23,11 +23,12 @@ actor_error_t actor_process_create(actor_node_t node, actor_process_t* process) 
 
     // init struct
     newProcess->pid = ACTOR_INVALID_ID;
-    newProcess->message_queue = NULL;
-    newProcess->sleep_semaphore = NULL;
+    newProcess->nid = node->id;
     newProcess->node = node;
     newProcess->supervisor_nid = ACTOR_INVALID_ID;
     newProcess->supervisor_pid = ACTOR_INVALID_ID;
+    newProcess->message_queue = NULL;
+    newProcess->sleep_semaphore = NULL;
 
     // create sleep semaphore
     newProcess->sleep_semaphore = dispatch_semaphore_create(0);
@@ -105,7 +106,7 @@ actor_error_t actor_process_link(actor_process_t process,
 
     // check supervisor id
     if ((supervisor_pid < 0) || (supervisor_nid < 0) ||
-        ((supervisor_nid == process->node->nid) && (supervisor_pid == process->pid))) {
+        ((supervisor_nid == process->nid) && (supervisor_pid == process->pid))) {
         return ACTOR_ERROR_INVALUE;
     }
 

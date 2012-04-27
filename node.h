@@ -3,7 +3,7 @@
 
 // node struct
 typedef struct {
-    actor_node_id_t nid;
+    actor_node_id_t id;
     actor_message_queue_t* message_queues;
     actor_process_id_t* remote_nodes;
     actor_size_t message_queue_count;

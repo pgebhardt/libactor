@@ -44,7 +44,7 @@ actor_error_t actor_process_spawn(actor_node_t node, actor_process_id_t* pid,
 
             // create error message
             actor_process_error_message_s error_message;
-            error_message.nid = node->nid;
+            error_message.nid = process->nid;
             error_message.pid = process->pid;
             error_message.error = result;
 
@@ -96,7 +96,7 @@ actor_error_t actor_message_send(actor_process_t process,
     actor_message_queue_t queue = NULL;
 
     // check node id
-    if (destination_nid == process->node->nid) {
+    if (destination_nid == process->nid) {
         // get message queue
         error = actor_node_get_message_queue(process->node, &queue, destination_pid);
 
