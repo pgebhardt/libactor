@@ -34,10 +34,14 @@ actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
         header.type = message->type;
 
         // send header
-        send(sock, &header, sizeof(actor_distributer_header_s), 0);
+        if (send(sock, &header, sizeof(actor_distributer_header_s), 0) == -1) {
+            return ACTOR_ERROR_NETWORK;
+        }
 
         // send message
-        send(sock, message->data, message->size, 0);
+        if (send(sock, message->data, message->size, 0) == -1) {
+            return ACTOR_ERROR_NETWORK;
+        }
 
         // release message
         actor_message_release(message);
