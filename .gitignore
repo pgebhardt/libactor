@@ -3,3 +3,5 @@
 *.a
 test
 example
+client
+server
