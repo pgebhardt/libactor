@@ -4,14 +4,19 @@ LDFLAGS =
 
 OBJ = actor.o message.o process.o node.o distributer.o
 BIN = libactor.a
+SRC = src
+OUTPUT = actor
 
 libactor: $(OBJ)
 	ar rc $(BIN) $(OBJ)
 	ranlib $(BIN)
+	#mkdir $(OUTPUT)
+	mv $(BIN) $(OUTPUT)
+	cp $(SRC)/*.h $(OUTPUT)
 
-%.o: %.c
+%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c $<
 
 .PHONY: clean
 clean:
-	rm -rf $(BIN) $(OBJ)
+	rm -rf $(OUTPUT)/$(BIN) $(OBJ)

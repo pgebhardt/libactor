@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "actor.h"
+#include "actor/actor.h"
 
 actor_error_t main_process(actor_process_t main) {
     // ping funktion
