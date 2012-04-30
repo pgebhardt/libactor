@@ -16,15 +16,7 @@ actor_error_t main_process(actor_process_t self) {
 
     // main loop
     while (true) {
-        // let client start pong process
-        error = actor_message_send(self, client, 0, ACTOR_TYPE_CUSTOM, "Start", 6);
-
-        // check success
-        if (error != ACTOR_SUCCESS) {
-            return error;
-        }
-
-        // receive pong id
+        // receive start message
         actor_message_t message = NULL;
         error = actor_message_receive(self, &message, 10.0);
 
@@ -34,52 +26,57 @@ actor_error_t main_process(actor_process_t self) {
         }
 
         // check message type
-        if (message->type != ACTOR_TYPE_UINT) {
+        if (message->type != ACTOR_TYPE_CUSTOM) {
+            // release message
+            actor_message_release(message);
+
             return ACTOR_ERROR;
         }
 
-        // get pong id
-        actor_process_id_t pong = *(actor_process_id_t*)message->data;
+        // start pong process
+        actor_process_id_t pong_process = ACTOR_INVALID_ID;
+        actor_process_spawn(self->node, &pong_process,
+            ^actor_error_t(actor_process_t pong) {
+                // link to main process
+                actor_process_link(pong, self->nid, self->pid);
 
-        // release message
-        actor_message_release(message);
+                // receive ping message
+                actor_message_t ping_message = NULL;
+                if (actor_message_receive(pong, &ping_message, 10.0)
+                    != ACTOR_SUCCESS) {
+                    return ACTOR_ERROR;
+                }
 
-        // start ping process
-        actor_process_spawn(self->node, NULL, ^actor_error_t(actor_process_t ping) {
-            // link to main process
-            actor_process_link(ping, self->nid, self->pid);
+                // check type
+                if (ping_message->type != ACTOR_TYPE_UINT) {
+                    // release message
+                    actor_message_release(ping_message);
 
-            // send ping to pong process
-            actor_message_send(ping, client, pong, ACTOR_TYPE_UINT, &ping->pid,
-                sizeof(actor_process_id_t));
+                    return ACTOR_ERROR;
+                }
 
-            // print
-            printf("%d.%d sent ping to %d.%d\n", ping->nid, ping->pid,
-                client, pong);
+                // print
+                printf("%d.%d received ping from %d.%d\n", pong->nid, pong->pid,
+                    client, *(actor_process_id_t*)ping_message->data);
 
-            // receive pong message
-            actor_message_t pong_message = NULL;
-            if (actor_message_receive(ping, &pong_message, 10.0) != ACTOR_SUCCESS) {
-                return ACTOR_ERROR;
-            }
+                // send pong
+                actor_message_send(pong, client,
+                    *(actor_process_id_t*)ping_message->data,
+                    ACTOR_TYPE_UINT, &pong->pid, sizeof(actor_process_id_t));
 
-            // check type
-            if (pong_message->type != ACTOR_TYPE_UINT) {
+                // print
+                printf("%d.%d sent pong to %d.%d\n", pong->nid, pong->pid,
+                    client, *(actor_process_id_t*)ping_message->data);
+
                 // release message
-                actor_message_release(pong_message);
+                actor_message_release(ping_message);
 
-                return ACTOR_ERROR;
-            }
+                return ACTOR_SUCCESS;
+            });
 
-            // print message
-            printf("%d.%d received pong from %d.%d\n", ping->nid, ping->pid,
-                client, *(actor_process_id_t*)pong_message->data);
-
-            // release message
-            actor_message_release(pong_message);
-
-            return ACTOR_SUCCESS;
-        });
+        // send pong id
+        actor_message_send(self, client, 0, ACTOR_TYPE_UINT,
+            &pong_process, sizeof(actor_process_id_t));
 
         // receive quit message
         error = actor_message_receive(self, &message, 10.0);
@@ -100,10 +97,8 @@ actor_error_t main_process(actor_process_t self) {
 
             return ACTOR_ERROR;
         }
-
-        // wait
-        actor_process_sleep(self, 2.0);
     }
+
     return ACTOR_SUCCESS;
 }
 
