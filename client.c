@@ -7,7 +7,7 @@ actor_error_t main_process(actor_process_t self) {
 
     // connect to server
     actor_node_id_t server = ACTOR_INVALID_ID;
-    error = actor_node_connect(self->node, &server, "127.0.0.1", 3000);
+    error = actor_node_connect(self->node, &server, "127.0.0.1", 3000, "bla");
 
     // check success
     if (error != ACTOR_SUCCESS) {

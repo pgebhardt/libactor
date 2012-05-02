@@ -211,7 +211,7 @@ actor_error_t actor_distributer_start_connectors(actor_node_t node,
 
 // connect to node
 actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id_t* nid,
-    char* const host_name, unsigned int port) {
+    char* const host_name, unsigned int port, const char* key) {
     // check valid node
     if (node == NULL) {
         return ACTOR_ERROR_INVALUE;
@@ -247,8 +247,21 @@ actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id
         return ACTOR_ERROR_NETWORK;
     }
 
+    // send key
+    if (send(sock, key, strlen(key) + 1, 0) == -1) {
+        // close connection
+        close(sock);
+
+        return ACTOR_ERROR_NETWORK;
+    }
+
     // send node id
-    send(sock, &node->id, sizeof(actor_node_id_t), 0);
+    if (send(sock, &node->id, sizeof(actor_node_id_t), 0) == -1) {
+        // close
+        close(sock);
+
+        return ACTOR_ERROR_NETWORK;
+    }
 
     // get node id
     actor_node_id_t node_id;
@@ -284,7 +297,7 @@ actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id
 
 // listen incomming connections
 actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
-    unsigned int port) {
+    unsigned int port, const char* key) {
     // check valid node
     if (node == NULL) {
         return ACTOR_ERROR_INVALUE;
@@ -332,6 +345,32 @@ actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
 
     // close socket
     close(sock);
+
+    // get key
+    char* remote_key = malloc(strlen(key) + 1);
+    if (recv(connected, remote_key, strlen(key) + 1, 0) != strlen(key) + 1) {
+        // free memory
+        free(remote_key);
+
+        // close connection
+        close(connected);
+
+        return ACTOR_ERROR_NETWORK;
+    }
+
+    // check key
+    if (strcmp(key, remote_key) != 0) {
+        // free memory
+        free(remote_key);
+
+        // close connection
+        close(connected);
+
+        return ACTOR_ERROR_NETWORK;
+    }
+
+    // free memory
+    free(remote_key);
 
     // send node id
     send(connected, &node->id, sizeof(actor_node_id_t), 0);

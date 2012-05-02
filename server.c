@@ -7,7 +7,7 @@ actor_error_t main_process(actor_process_t self) {
 
     // wait for client connection
     actor_node_id_t client = ACTOR_INVALID_ID;
-    error = actor_node_listen(self->node, &client, 3000);
+    error = actor_node_listen(self->node, &client, 3000, "bla");
 
     // check success
     if (error != ACTOR_SUCCESS) {

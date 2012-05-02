@@ -37,10 +37,10 @@ actor_error_t actor_node_message_queue_release(actor_node_t node,
 
 // connect to remote node
 actor_error_t actor_node_connect(actor_node_t node, actor_node_id_t* nid,
-    char* const host_name, unsigned int host_port);
+    char* const host_name, unsigned int host_port, const char* key);
 
 // listen for incomming connection
 actor_error_t actor_node_listen(actor_node_t node, actor_node_id_t* nid,
-    unsigned int port);
+    unsigned int port, const char* key);
 
 #endif

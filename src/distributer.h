@@ -11,10 +11,10 @@ typedef actor_distributer_header_s* actor_distributer_header_t;
 
 // connect to node
 actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id_t* nid,
-    char* const host_name, unsigned int port);
+    char* const host_name, unsigned int port, const char* key);
 
 // listen incomming connections
 actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
-    unsigned int port);
+    unsigned int port, const char* key);
 
 #endif
