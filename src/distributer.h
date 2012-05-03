@@ -1,6 +1,9 @@
 #ifndef DISTRIBUTER_H
 #define DISTRIBUTER_H
 
+// key length
+#define ACTOR_DISTRIBUTER_KEYLENGTH (30)
+
 // message header
 typedef struct {
     actor_process_id_t dest_id;
