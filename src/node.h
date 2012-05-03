@@ -1,6 +1,9 @@
 #ifndef NODE_H
 #define NODE_H
 
+// maximum remote nodes count
+#define ACTOR_NODE_MAX_REMOTE_NODES (1024)
+
 // node struct
 typedef struct {
     actor_node_id_t id;

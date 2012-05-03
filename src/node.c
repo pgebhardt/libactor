@@ -41,7 +41,7 @@ actor_error_t actor_node_create(actor_node_t* node, actor_node_id_t id,
     }
 
     // create remote node array
-    newNode->remote_nodes = malloc(sizeof(int) * 1024);
+    newNode->remote_nodes = malloc(sizeof(int) * ACTOR_NODE_MAX_REMOTE_NODES);
 
     // check success
     if (newNode->remote_nodes == NULL) {
@@ -52,7 +52,7 @@ actor_error_t actor_node_create(actor_node_t* node, actor_node_id_t id,
     }
 
     // init array
-    for (actor_size_t i = 0; i < 1024; i++) {
+    for (actor_size_t i = 0; i < ACTOR_NODE_MAX_REMOTE_NODES; i++) {
         newNode->remote_nodes[i] = -1;
     }
 
