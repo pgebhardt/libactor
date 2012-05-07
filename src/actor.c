@@ -78,7 +78,7 @@ actor_error_t actor_message_send(actor_process_t process,
     actor_error_t error = ACTOR_SUCCESS;
 
     // check destination nid
-    if ((destination_nid < 0) || (destination_nid > ACTOR_NODE_MAX_REMOTE_NODES)) {
+    if ((destination_nid < 0) || (destination_nid >= ACTOR_NODE_MAX_REMOTE_NODES)) {
         return ACTOR_ERROR_INVALUE;
     }
 
