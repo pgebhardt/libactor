@@ -5,6 +5,7 @@
 #include <netdb.h>
 #include <string.h>
 #include "actor.h"
+#include <stdio.h>
 
 // message send process
 actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
@@ -34,12 +35,12 @@ actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
         header.type = message->type;
 
         // send header
-        if (send(sock, &header, sizeof(actor_distributer_header_s), 0) == -1) {
+        if (send(sock, &header, sizeof(actor_distributer_header_s), 0) <= 0) {
             return ACTOR_ERROR_NETWORK;
         }
 
         // send message
-        if (send(sock, message->data, message->size, 0) == -1) {
+        if (send(sock, message->data, message->size, 0) <= 0) {
             return ACTOR_ERROR_NETWORK;
         }
 
@@ -74,15 +75,30 @@ actor_error_t actor_distributer_message_receive(actor_process_t self, int sock) 
         // create message buffer
         char* data = malloc(header.message_size);
 
+        // total received data
+        int total_received = 0;
+
         // receive message
-        bytes_received = recv(sock, data, header.message_size, 0);
+        while (true) {
+            // get chunk
+            bytes_received = recv(sock, &data[total_received],
+                header.message_size - total_received, 0);
 
-        // check correct message length
-        if (bytes_received != header.message_size) {
-            // free data
-            free(data);
+            // check success
+            if (bytes_received <= 0) {
+                // cleanup
+                free(data);
 
-            continue;
+                return ACTOR_ERROR_NETWORK;
+            }
+
+            // increase total size
+            total_received += bytes_received;
+
+            // check length
+            if (total_received >= header.message_size) {
+                break;
+            }
         }
 
         // send message
@@ -236,6 +252,12 @@ actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id
         return ACTOR_ERROR_NETWORK;
     }
 
+    // set recv timeout to 10 sec
+    struct timeval tv;
+    tv.tv_sec = 10;
+    tv.tv_usec = 0;
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&tv, sizeof(struct timeval));
+
     // get host address
     struct hostent* host = gethostbyname(host_name);
 
@@ -356,6 +378,12 @@ actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
     unsigned int sin_size = sizeof(struct sockaddr_in);
     struct sockaddr_in client_addr;
     int connected = accept(sock, (struct sockaddr *)&client_addr,&sin_size);
+
+    // set recv timeout to 10 sec
+    struct timeval tv;
+    tv.tv_sec = 10;
+    tv.tv_usec = 0;
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&tv, sizeof(struct timeval));
 
     // close socket
     close(sock);

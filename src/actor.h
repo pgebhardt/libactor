@@ -5,14 +5,14 @@
 #include <stdlib.h>
 #include <dispatch/dispatch.h>
 
+// data type definitions
+#include "type.h"
+
 // standard type definitions
 #include "common.h"
 
 // error definitions
 #include "error.h"
-
-// data type definitions
-#include "type.h"
 
 // actor includes
 #include "message.h"
