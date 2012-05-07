@@ -46,4 +46,7 @@ actor_error_t actor_node_connect(actor_node_t node, actor_node_id_t* nid,
 actor_error_t actor_node_listen(actor_node_t node, actor_node_id_t* nid,
     unsigned int port, const char* key);
 
+// close connection
+actor_error_t actor_node_disconnect(actor_node_t node, actor_node_id_t nid);
+
 #endif

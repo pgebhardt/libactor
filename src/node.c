@@ -274,3 +274,20 @@ actor_error_t actor_node_listen(actor_node_t node, actor_node_id_t* nid,
     // start listening
     return actor_distributer_listen(node, nid, port, key);
 }
+
+// close connection
+actor_error_t actor_node_disconnect(actor_node_t node, actor_node_id_t nid) {
+    // check input
+    if ((node == NULL) || (nid < 0) || (nid >= ACTOR_NODE_MAX_REMOTE_NODES)) {
+        return ACTOR_ERROR_INVALUE;
+    }
+
+    // check connection state
+    if (node->remote_nodes[nid] == ACTOR_INVALID_ID) {
+        return ACTOR_ERROR_NETWORK;
+    }
+
+    // send disconnect message
+    // TODO
+    // return actor_message_send(
+}
