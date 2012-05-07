@@ -5,7 +5,6 @@
 #include <netdb.h>
 #include <string.h>
 #include "actor.h"
-#include <stdio.h>
 
 // message send process
 actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
@@ -63,8 +62,12 @@ actor_error_t actor_distributer_message_receive(actor_process_t self, int sock) 
             sizeof(actor_distributer_header_s), 0);
 
         // check for closed connection
-        if (bytes_received <= 0) {
+        if (bytes_received == 0) {
             return ACTOR_ERROR_NETWORK;
+        }
+        // check for message error
+        else if (bytes_received == -1) {
+            continue;
         }
 
         // check correct header
@@ -84,12 +87,20 @@ actor_error_t actor_distributer_message_receive(actor_process_t self, int sock) 
             bytes_received = recv(sock, &data[total_received],
                 header.message_size - total_received, 0);
 
-            // check success
-            if (bytes_received <= 0) {
+            // check for closed connection
+            if (bytes_received == 0) {
                 // cleanup
                 free(data);
 
                 return ACTOR_ERROR_NETWORK;
+            }
+            // check for message error
+            else if (bytes_received == -1) {
+                // cleanup
+                free(data);
+                data = NULL;
+
+                break;
             }
 
             // increase total size
@@ -123,6 +134,14 @@ actor_error_t actor_distributer_connection_supervisor(actor_process_t self,
         // receive error message
         actor_message_t message = NULL;
         if (actor_message_receive(self, &message, 10.0) != ACTOR_SUCCESS) {
+            continue;
+        }
+
+        // check message
+        if (message->type != ACTOR_TYPE_ERROR_MESSAGE) {
+            // cleanup
+            actor_message_release(message);
+
             continue;
         }
 
