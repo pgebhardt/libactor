@@ -5,6 +5,7 @@
 #include <netdb.h>
 #include <string.h>
 #include "actor.h"
+#include <stdio.h>
 
 // message send process
 actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
@@ -74,16 +75,26 @@ actor_error_t actor_distributer_message_receive(actor_process_t self, int sock) 
         // create message buffer
         char* data = malloc(header.message_size);
 
+        // total received data
+        int total_received = 0;
+
         // receive message
-        bytes_received = recv(sock, data, header.message_size, 0);
+        while (true) {
+            // get chunk
+            bytes_received = recv(sock, &data[total_received],
+                header.message_size - total_received, 0);
+            printf("total size: %d, data received: %d, message size: %d\n", total_received,
+                bytes_received, header.message_size);
 
-        // check correct message length
-        if (bytes_received != header.message_size) {
-            // free data
-            free(data);
+            // increase total size
+            total_received += bytes_received;
 
-            continue;
+            // check length
+            if (total_received >= header.message_size) {
+                break;
+            }
         }
+        printf("total received: %d\n", total_received);
 
         // send message
         actor_message_send(self, self->nid, header.dest_id,
