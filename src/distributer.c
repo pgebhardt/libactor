@@ -21,7 +21,7 @@ actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
     while (true) {
         // get message
         actor_message_t message = NULL;
-        error = actor_message_receive(self, &message, 10.0);
+        error = actor_receive(self, &message, 10.0);
 
         // check error
         if (error != ACTOR_SUCCESS) {
@@ -123,7 +123,7 @@ actor_error_t actor_distributer_message_receive(actor_process_t self, int sock) 
         }
 
         // send message
-        actor_message_send(self, self->nid, header.dest_id,
+        actor_send(self, self->nid, header.dest_id,
             header.type, data, header.message_size);
 
         // free message buffer
@@ -143,7 +143,7 @@ actor_error_t actor_distributer_connection_supervisor(actor_process_t self,
     while (true) {
         // receive error message
         actor_message_t message = NULL;
-        if (actor_message_receive(self, &message, 10.0) != ACTOR_SUCCESS) {
+        if (actor_receive(self, &message, 10.0) != ACTOR_SUCCESS) {
             continue;
         }
 
@@ -162,7 +162,7 @@ actor_error_t actor_distributer_connection_supervisor(actor_process_t self,
         // check error message
         if (error_message->error == ACTOR_ERROR_TIMEOUT) {
             // restart sender
-            actor_error_t error = actor_process_spawn(self->node, &sender,
+            actor_error_t error = actor_spawn(self->node, &sender,
                 ^actor_error_t(actor_process_t s) {
                     // set self as supervisor
                     actor_process_link(s, self->nid, self->pid);
@@ -206,7 +206,7 @@ actor_error_t actor_distributer_start_connectors(actor_node_t node,
 
     // start connection supervisor
     actor_process_id_t supervisor = ACTOR_INVALID_ID;
-    error = actor_process_spawn(node, &supervisor,
+    error = actor_spawn(node, &supervisor,
         ^actor_error_t(actor_process_t self) {
             return actor_distributer_connection_supervisor(self, remote_node, sock);
         });
@@ -218,7 +218,7 @@ actor_error_t actor_distributer_start_connectors(actor_node_t node,
 
     // start receive process
     actor_process_id_t receiver = ACTOR_INVALID_ID;
-    error = actor_process_spawn(node, &receiver,
+    error = actor_spawn(node, &receiver,
         ^actor_error_t(actor_process_t s) {
             // set self as supervisor
             actor_process_link(s, s->nid, supervisor);
@@ -234,7 +234,7 @@ actor_error_t actor_distributer_start_connectors(actor_node_t node,
 
     // start send process
     actor_process_id_t sender = ACTOR_INVALID_ID;
-    error = actor_process_spawn(node, &sender,
+    error = actor_spawn(node, &sender,
         ^actor_error_t(actor_process_t s) {
             // set self as supervisor
             actor_process_link(s, s->nid, supervisor);

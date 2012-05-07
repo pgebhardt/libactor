@@ -59,6 +59,7 @@ actor_error_t actor_process_create(actor_node_t node, actor_process_t* process) 
     return ACTOR_SUCCESS;
 }
 
+// release process
 actor_error_t actor_process_release(actor_process_t process) {
     // check for valid process
     if (process == NULL) {
@@ -79,6 +80,18 @@ actor_error_t actor_process_release(actor_process_t process) {
     free(process);
 
     return ACTOR_SUCCESS;
+}
+
+// message receive
+actor_error_t actor_process_receive_message(actor_process_t process, actor_message_t* message,
+    actor_time_t timeout) {
+    // check for correct input
+    if ((process == NULL) || (timeout < 0.0) || (message == NULL)) {
+        return ACTOR_ERROR_INVALUE;
+    }
+
+    // get message
+    return actor_message_queue_get(process->message_queue, message, timeout);
 }
 
 // sleep

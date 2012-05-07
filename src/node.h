@@ -26,6 +26,15 @@ actor_error_t actor_node_create(actor_node_t* node, actor_node_id_t id,
 // cleanup
 actor_error_t actor_node_release(actor_node_t node);
 
+// spawn new process
+actor_error_t actor_node_spawn_process(actor_node_t node, actor_process_id_t* pid,
+    actor_process_function_t function);
+
+// message sending
+actor_error_t actor_node_send_message(actor_node_t node,
+    actor_node_id_t destination_nid, actor_process_id_t destination_pid,
+    actor_data_type_t type, actor_message_data_t const data, actor_size_t size);
+
 // get free message queue
 actor_error_t actor_node_get_free_message_queue(actor_node_t node,
     actor_message_queue_t* queue, actor_process_id_t* id);

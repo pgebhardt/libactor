@@ -30,6 +30,10 @@ actor_error_t actor_process_create(actor_node_t node, actor_process_t* process);
 // release process
 actor_error_t actor_process_release(actor_process_t process);
 
+// message receive
+actor_error_t actor_process_receive_message(actor_process_t process, actor_message_t* message,
+    actor_time_t timeout);
+
 // sleep
 actor_error_t actor_process_sleep(actor_process_t process, actor_time_t time);
 
