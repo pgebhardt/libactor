@@ -28,6 +28,16 @@ actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
             return error;
         }
 
+        // on dedicated message close connection
+        if ((message->destination_nid == self->nid) &&
+            (message->destination_pid == self->pid)) {
+            // TODO: special close message
+            // cleanup
+            actor_message_release(message);
+
+            break;
+        }
+
         // create header
         header.dest_id = message->destination_pid;
         header.message_size = message->size;
