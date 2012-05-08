@@ -41,7 +41,7 @@ actor_error_t actor_node_get_free_message_queue(actor_node_t node,
 
 // get message queue for id
 actor_error_t actor_node_get_message_queue(actor_node_t node,
-    actor_message_queue_t* queue, actor_process_id_t id);
+    actor_message_queue_t** queue, actor_process_id_t id);
 
 // release message queue
 actor_error_t actor_node_message_queue_release(actor_node_t node,

@@ -221,7 +221,7 @@ actor_error_t actor_node_send_message(actor_node_t node,
     message->destination_pid = destination_pid;
 
     // destination message queue
-    actor_message_queue_t queue = NULL;
+    actor_message_queue_t* queue = NULL;
 
     // check node id
     if (destination_nid == node->id) {
@@ -251,7 +251,7 @@ actor_error_t actor_node_send_message(actor_node_t node,
     }
 
     // enqueue message
-    return actor_message_queue_put(queue, message);
+    return actor_message_queue_put(*queue, message);
 }
 
 // get free message queue
@@ -340,7 +340,7 @@ actor_error_t actor_node_get_free_message_queue(actor_node_t node,
 
 // get message queue for id
 actor_error_t actor_node_get_message_queue(actor_node_t node,
-    actor_message_queue_t* queue, actor_process_id_t pid) {
+    actor_message_queue_t** queue, actor_process_id_t pid) {
     // check for valid input
     if ((node == NULL) || (queue == NULL)) {
         return ACTOR_ERROR_INVALUE;
@@ -352,7 +352,7 @@ actor_error_t actor_node_get_message_queue(actor_node_t node,
     }
 
     // set queue pointer
-    *queue = node->message_queues[pid];
+    *queue = &node->message_queues[pid];
 
     return ACTOR_SUCCESS;
 }

@@ -6,10 +6,10 @@ actor_error_t main_process(actor_process_t main) {
     actor_error_t (^ping_function)(actor_process_t) = ^actor_error_t(actor_process_t ping) {
         // start pong process
         actor_process_id_t pong_id = ACTOR_INVALID_ID;
-        actor_process_spawn(ping->node, &pong_id, ^actor_error_t(actor_process_t pong) {
+        actor_spawn(ping->node, &pong_id, ^actor_error_t(actor_process_t pong) {
             // receive ping message
             actor_message_t message = NULL;
-            if (actor_message_receive(pong, &message, 10.0) != ACTOR_SUCCESS) {
+            if (actor_receive(pong, &message, 10.0) != ACTOR_SUCCESS) {
                 return ACTOR_ERROR;
             }
 
@@ -25,17 +25,17 @@ actor_error_t main_process(actor_process_t main) {
             actor_message_release(message);
 
             // send pong
-            actor_message_send(pong, ping->nid, ping->pid, ACTOR_TYPE_CHAR, "Pong!", 6);
+            actor_send(pong, ping->nid, ping->pid, ACTOR_TYPE_CHAR, "Pong!", 6);
 
             return ACTOR_SUCCESS;
         });
 
         // send ping message
-        actor_message_send(ping, ping->nid, pong_id, ACTOR_TYPE_CHAR, "Ping!", 6);
+        actor_send(ping, ping->nid, pong_id, ACTOR_TYPE_CHAR, "Ping!", 6);
 
         // receive message
         actor_message_t message = NULL;
-        if (actor_message_receive(ping, &message, 10.0) != ACTOR_SUCCESS) {
+        if (actor_receive(ping, &message, 10.0) != ACTOR_SUCCESS) {
             return ACTOR_ERROR;
         }
 
@@ -56,7 +56,7 @@ actor_error_t main_process(actor_process_t main) {
     // main loop
     while (true) {
         // start ping process
-        actor_process_spawn(main->node, NULL, ^actor_error_t(actor_process_t self) {
+        actor_spawn(main->node, NULL, ^actor_error_t(actor_process_t self) {
             // link to main
             actor_process_link(self, main->nid, main->pid);
 
@@ -66,7 +66,7 @@ actor_error_t main_process(actor_process_t main) {
 
         // receive error
         actor_message_t message = NULL;
-        if (actor_message_receive(main, &message, 10.0) != ACTOR_SUCCESS) {
+        if (actor_receive(main, &message, 10.0) != ACTOR_SUCCESS) {
             return ACTOR_ERROR;
         }
 
@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
     }
 
     // start main process
-    actor_process_spawn(node, NULL, ^actor_error_t(actor_process_t self) {
+    actor_spawn(node, NULL, ^actor_error_t(actor_process_t self) {
             return main_process(self);
         });
 
