@@ -420,5 +420,5 @@ actor_error_t actor_node_disconnect(actor_node_t node, actor_node_id_t nid) {
 
     // send disconnect message
     return actor_node_send_message(node, node->id, node->remote_nodes[nid],
-        ACTOR_TYPE_ERROR_MESSAGE, "STOP", 5);
+        ACTOR_TYPE_CHAR, "STOP", 5);
 }

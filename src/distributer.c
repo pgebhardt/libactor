@@ -186,7 +186,11 @@ actor_error_t actor_distributer_connection_supervisor(actor_process_t self,
     }
 
     // close connection
-    close(sock);
+    shutdown(sock, 2);
+
+    // try close send process
+    actor_send(self, self->nid, self->node->remote_nodes[remote_node],
+        ACTOR_TYPE_CHAR, "STOP", 5);
 
     // invalid connection
     self->node->remote_nodes[remote_node] = ACTOR_INVALID_ID;
@@ -283,7 +287,7 @@ actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id
 
     // set recv timeout to 10 sec
     struct timeval tv;
-    tv.tv_sec = 10;
+    tv.tv_sec = 2;
     tv.tv_usec = 0;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&tv, sizeof(struct timeval));
 
@@ -408,14 +412,15 @@ actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
     struct sockaddr_in client_addr;
     int connected = accept(sock, (struct sockaddr *)&client_addr,&sin_size);
 
+    // close socket
+    close(sock);
+
     // set recv timeout to 10 sec
     struct timeval tv;
     tv.tv_sec = 10;
     tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&tv, sizeof(struct timeval));
-
-    // close socket
-    close(sock);
+    setsockopt(connected, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&tv,
+        sizeof(struct timeval));
 
     // get key
     char remote_key[ACTOR_DISTRIBUTER_KEYLENGTH + 1];
