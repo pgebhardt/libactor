@@ -15,4 +15,7 @@ typedef unsigned int actor_error_t;
 #define ACTOR_ERROR_NETWORK             (7)
 #define ACTOR_ERROR_MESSAGE_PASSING     (8)
 
+// get error string by error
+const char* actor_error_string(actor_error_t error);
+
 #endif
