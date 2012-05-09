@@ -137,8 +137,8 @@ actor_error_t actor_process_unlink(actor_process_t process) {
     }
 
     // unlink
-    process->supervisor_nid = -1;
-    process->supervisor_pid = -1;
+    process->supervisor_nid = ACTOR_INVALID_ID;
+    process->supervisor_pid = ACTOR_INVALID_ID;
 
     return ACTOR_SUCCESS;
 }
