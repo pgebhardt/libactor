@@ -189,8 +189,7 @@ actor_error_t actor_distributer_connection_supervisor(actor_process_t self,
     shutdown(sock, 2);
 
     // try close send process
-    actor_send(self, self->nid, self->node->remote_nodes[remote_node],
-        ACTOR_TYPE_CHAR, "STOP", 5);
+    actor_distributer_disconnect_from_node(self->node, remote_node);
 
     // invalid connection
     self->node->remote_nodes[remote_node] = ACTOR_INVALID_ID;
@@ -260,7 +259,7 @@ actor_error_t actor_distributer_start_connectors(actor_node_t node,
 
 // connect to node
 actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id_t* nid,
-    char* const host_name, unsigned int port, const char* key) {
+    const char* host_name, unsigned int port, const char* key) {
     // check valid node
     if (node == NULL) {
         return ACTOR_ERROR_INVALUE;
@@ -474,4 +473,21 @@ actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
     }
 
     return ACTOR_SUCCESS;
+}
+
+// disconnect from node
+actor_error_t actor_distributer_disconnect_from_node(actor_node_t node, actor_node_id_t nid) {
+    // check input
+    if ((node == NULL) || (nid < 0) || (nid >= ACTOR_NODE_MAX_REMOTE_NODES)) {
+        return ACTOR_ERROR_INVALUE;
+    }
+
+    // check connection state
+    if (node->remote_nodes[nid] == ACTOR_INVALID_ID) {
+        return ACTOR_ERROR_NETWORK;
+    }
+
+    // send disconnect message
+    return actor_node_send_message(node, node->id, node->remote_nodes[nid],
+        ACTOR_TYPE_CHAR, "STOP", 5);
 }

@@ -384,7 +384,7 @@ actor_error_t actor_node_message_queue_release(actor_node_t node,
 
 // connect to remote node
 actor_error_t actor_node_connect(actor_node_t node, actor_node_id_t* nid,
-    char* const host_name, unsigned int host_port, const char* key) {
+    const char* host_name, unsigned int host_port, const char* key) {
     // check for valid node
     if (node == NULL) {
         return ACTOR_ERROR_INVALUE;
@@ -408,17 +408,11 @@ actor_error_t actor_node_listen(actor_node_t node, actor_node_id_t* nid,
 
 // close connection
 actor_error_t actor_node_disconnect(actor_node_t node, actor_node_id_t nid) {
-    // check input
-    if ((node == NULL) || (nid < 0) || (nid >= ACTOR_NODE_MAX_REMOTE_NODES)) {
+    // check for valid node
+    if (node == NULL) {
         return ACTOR_ERROR_INVALUE;
     }
 
-    // check connection state
-    if (node->remote_nodes[nid] == ACTOR_INVALID_ID) {
-        return ACTOR_ERROR_NETWORK;
-    }
-
-    // send disconnect message
-    return actor_node_send_message(node, node->id, node->remote_nodes[nid],
-        ACTOR_TYPE_CHAR, "STOP", 5);
+    // disconnect
+    return actor_distributer_disconnect_from_node(node, nid);
 }
