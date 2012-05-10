@@ -31,9 +31,8 @@ actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
         // on dedicated message close connection
         if ((message->destination_nid == self->nid) &&
             (message->destination_pid == self->pid)) {
-            // TODO: special close message
             // cleanup
-            actor_message_release(message);
+            actor_message_release(&message);
 
             break;
         }
@@ -54,7 +53,7 @@ actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {
         }
 
         // release message
-        actor_message_release(message);
+        actor_message_release(&message);
     }
 
     return ACTOR_SUCCESS;
@@ -89,7 +88,7 @@ actor_error_t actor_distributer_message_receive(actor_process_t self, int sock) 
         char* data = malloc(header.message_size);
 
         // total received data
-        int total_received = 0;
+        actor_size_t total_received = 0;
 
         // receive message
         while (true) {
@@ -150,7 +149,7 @@ actor_error_t actor_distributer_connection_supervisor(actor_process_t self,
         // check message
         if (message->type != ACTOR_TYPE_ERROR_MESSAGE) {
             // cleanup
-            actor_message_release(message);
+            actor_message_release(&message);
 
             continue;
         }
@@ -176,13 +175,13 @@ actor_error_t actor_distributer_connection_supervisor(actor_process_t self,
         }
         else {
             // release message
-            actor_message_release(message);
+            actor_message_release(&message);
 
             break;
         }
 
         // release message
-        actor_message_release(message);
+        actor_message_release(&message);
     }
 
     // close connection
@@ -222,12 +221,12 @@ actor_error_t actor_distributer_start_connectors(actor_node_t node,
     // start receive process
     actor_process_id_t receiver = ACTOR_INVALID_ID;
     error = actor_spawn(node, &receiver,
-        ^actor_error_t(actor_process_t s) {
+        ^actor_error_t(actor_process_t self) {
             // set self as supervisor
-            actor_process_link(s, s->nid, supervisor);
+            actor_process_link(self, self->nid, supervisor);
 
             // start receive process
-            return actor_distributer_message_receive(s, sock);
+            return actor_distributer_message_receive(self, sock);
         });
 
     // check success
@@ -238,12 +237,12 @@ actor_error_t actor_distributer_start_connectors(actor_node_t node,
     // start send process
     actor_process_id_t sender = ACTOR_INVALID_ID;
     error = actor_spawn(node, &sender,
-        ^actor_error_t(actor_process_t s) {
+        ^actor_error_t(actor_process_t self) {
             // set self as supervisor
-            actor_process_link(s, s->nid, supervisor);
+            actor_process_link(self, self->nid, supervisor);
 
             // start send process
-            return actor_distributer_message_send(s, sock);
+            return actor_distributer_message_send(self, sock);
         });
 
     // check success
@@ -286,7 +285,7 @@ actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id
 
     // set recv timeout to 10 sec
     struct timeval tv;
-    tv.tv_sec = 2;
+    tv.tv_sec = 10;
     tv.tv_usec = 0;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&tv, sizeof(struct timeval));
 
@@ -311,7 +310,7 @@ actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id
     strcpy(buffer, key);
 
     // send key
-    if (send(sock, &buffer, ACTOR_DISTRIBUTER_KEYLENGTH + 1, 0) == -1) {
+    if (send(sock, &buffer, ACTOR_DISTRIBUTER_KEYLENGTH + 1, 0) <= 0) {
         // close connection
         close(sock);
 
@@ -319,7 +318,7 @@ actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id
     }
 
     // send node id
-    if (send(sock, &node->id, sizeof(actor_node_id_t), 0) == -1) {
+    if (send(sock, &node->id, sizeof(actor_node_id_t), 0) <= 0) {
         // close
         close(sock);
 
@@ -331,11 +330,19 @@ actor_error_t actor_distributer_connect_to_node(actor_node_t node, actor_node_id
     bytes_received = recv(sock, &node_id, sizeof(actor_node_id_t), 0);
 
     // check success
-    if ((bytes_received != sizeof(actor_node_id_t)) ||
+    if (bytes_received != sizeof(actor_node_id_t)) {
+        // close connection
+        close(sock);
+
+        return ACTOR_ERROR_NETWORK;
+    }
+
+    if ((node_id < 0) || (node_id > ACTOR_NODE_MAX_REMOTE_NODES) ||
         (node->remote_nodes[node_id] != ACTOR_INVALID_ID) ||
         (node_id == node->id)) {
         // close connection
         close(sock);
+
         return ACTOR_ERROR_NETWORK;
     }
 
@@ -409,10 +416,15 @@ actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
     // accept incomming connections
     unsigned int sin_size = sizeof(struct sockaddr_in);
     struct sockaddr_in client_addr;
-    int connected = accept(sock, (struct sockaddr *)&client_addr,&sin_size);
+    int connected = accept(sock, (struct sockaddr *)&client_addr, &sin_size);
 
     // close socket
     close(sock);
+
+    // check success
+    if (connected == -1) {
+        return ACTOR_ERROR_NETWORK;
+    }
 
     // set recv timeout to 10 sec
     struct timeval tv;
@@ -440,14 +452,26 @@ actor_error_t actor_distributer_listen(actor_node_t node, actor_node_id_t* nid,
     }
 
     // send node id
-    send(connected, &node->id, sizeof(actor_node_id_t), 0);
+    if (send(connected, &node->id, sizeof(actor_node_id_t), 0) <= 0) {
+        // close connection
+        close(connected);
+
+        return ACTOR_ERROR_NETWORK;
+    }
 
     // get node id
     actor_node_id_t node_id;
     bytes_received = recv(connected, &node_id, sizeof(actor_node_id_t), 0);
 
     // check success
-    if ((bytes_received != sizeof(actor_node_id_t)) ||
+    if (bytes_received != sizeof(actor_node_id_t)) {
+        // close connection
+        close(connected);
+
+        return ACTOR_ERROR_NETWORK;
+    }
+
+    if ((node_id < 0) || (node_id >= ACTOR_NODE_MAX_REMOTE_NODES) ||
         (node->remote_nodes[node_id] != ACTOR_INVALID_ID) ||
         (node_id == node->id)){
         // close connection

@@ -1,15 +1,15 @@
 #include "actor.h"
 
 // error strings
-const char* actor_error_string_success = "success";
-const char* actor_error_string_error = "error";
-const char* actor_error_string_invalue = "invalid argument";
-const char* actor_error_string_memory = "memory error";
-const char* actor_error_string_timeout = "timeout";
-const char* actor_error_string_dispatch = "dispatch error";
-const char* actor_error_string_too_many_processes = "too many processes";
-const char* actor_error_string_network = "network error";
-const char* actor_error_string_message_passing = "message passing error";
+static const char* actor_error_string_success = "success";
+static const char* actor_error_string_error = "error";
+static const char* actor_error_string_invalue = "invalid argument";
+static const char* actor_error_string_memory = "memory error";
+static const char* actor_error_string_timeout = "timeout";
+static const char* actor_error_string_dispatch = "dispatch error";
+static const char* actor_error_string_too_many_processes = "too many processes";
+static const char* actor_error_string_network = "network error";
+static const char* actor_error_string_message_passing = "message passing error";
 
 // get error string by error
 const char* actor_error_string(actor_error_t error) {

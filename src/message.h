@@ -25,17 +25,17 @@ typedef struct {
 typedef actor_message_queue_s* actor_message_queue_t;
 
 // create new message
-actor_error_t actor_message_create(actor_message_t* message,
+actor_error_t actor_message_create(actor_message_t* messagePointer,
     actor_data_type_t type, actor_message_data_t const data, actor_size_t size);
 
 // cleanup message
-actor_error_t actor_message_release(actor_message_t message);
+actor_error_t actor_message_release(actor_message_t* messagePointer);
 
 // create new queue
-actor_error_t actor_message_queue_create(actor_message_queue_t* queue);
+actor_error_t actor_message_queue_create(actor_message_queue_t* queuePointer);
 
 // cleanup queue
-actor_error_t actor_message_queue_release(actor_message_queue_t queue);
+actor_error_t actor_message_queue_release(actor_message_queue_t* queuePointer);
 
 // add new message to queue
 actor_error_t actor_message_queue_put(actor_message_queue_t queue,

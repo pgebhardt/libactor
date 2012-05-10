@@ -1,9 +1,9 @@
 #include "actor.h"
 
 // create process
-actor_error_t actor_process_create(actor_node_t node, actor_process_t* process) {
+actor_error_t actor_process_create(actor_node_t node, actor_process_t* processPointer) {
     // check valid input
-    if ((node == NULL) || (process == NULL)) {
+    if ((node == NULL) || (processPointer == NULL)) {
         return ACTOR_ERROR_INVALUE;
     }
 
@@ -11,60 +11,63 @@ actor_error_t actor_process_create(actor_node_t node, actor_process_t* process) 
     actor_error_t error = ACTOR_SUCCESS;
 
     // init process pointer to NULL
-    *process = NULL;
+    *processPointer = NULL;
 
     // create process struct
-    actor_process_t newProcess = malloc(sizeof(actor_process_s));
+    actor_process_t process = malloc(sizeof(actor_process_s));
 
     // check success
-    if (newProcess == NULL) {
+    if (process == NULL) {
         return ACTOR_ERROR_MEMORY;
     }
 
     // init struct
-    newProcess->pid = ACTOR_INVALID_ID;
-    newProcess->nid = node->id;
-    newProcess->node = node;
-    newProcess->supervisor_nid = ACTOR_INVALID_ID;
-    newProcess->supervisor_pid = ACTOR_INVALID_ID;
-    newProcess->message_queue = NULL;
-    newProcess->sleep_semaphore = NULL;
+    process->pid = ACTOR_INVALID_ID;
+    process->nid = node->id;
+    process->node = node;
+    process->supervisor_nid = ACTOR_INVALID_ID;
+    process->supervisor_pid = ACTOR_INVALID_ID;
+    process->message_queue = NULL;
+    process->sleep_semaphore = NULL;
 
     // create sleep semaphore
-    newProcess->sleep_semaphore = dispatch_semaphore_create(0);
+    process->sleep_semaphore = dispatch_semaphore_create(0);
 
     // check for success
-    if (newProcess->sleep_semaphore == NULL) {
+    if (process->sleep_semaphore == NULL) {
         // release process
-        actor_process_release(newProcess);
+        actor_process_release(&process);
 
         return ACTOR_ERROR_DISPATCH;
     }
 
     // get free message queue
     error = actor_node_get_free_message_queue(node,
-        &newProcess->message_queue, &newProcess->pid);
+        &process->message_queue, &process->pid);
 
     // check success
     if (error != ACTOR_SUCCESS) {
         // release process
-        actor_process_release(newProcess);
+        actor_process_release(&process);
 
         return error;
     }
 
     // set process pointer
-    *process = newProcess;
+    *processPointer = process;
 
     return ACTOR_SUCCESS;
 }
 
 // release process
-actor_error_t actor_process_release(actor_process_t process) {
+actor_error_t actor_process_release(actor_process_t* processPointer) {
     // check for valid process
-    if (process == NULL) {
+    if ((processPointer == NULL) || (*processPointer == NULL)) {
         return ACTOR_ERROR_INVALUE;
     }
+
+    // get process
+    actor_process_t process = *processPointer;
 
     // release sleep semaphore
     if (process->sleep_semaphore != NULL) {
@@ -78,6 +81,9 @@ actor_error_t actor_process_release(actor_process_t process) {
 
     // free process memory
     free(process);
+
+    // set process pointer to NULL
+    *processPointer = NULL;
 
     return ACTOR_SUCCESS;
 }

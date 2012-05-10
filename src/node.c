@@ -1,94 +1,97 @@
 #include "actor.h"
 
 // create node
-actor_error_t actor_node_create(actor_node_t* node, actor_node_id_t id,
+actor_error_t actor_node_create(actor_node_t* nodePointer, actor_node_id_t id,
     actor_size_t size) {
     // check valid node pointer
-    if (node == NULL) {
+    if (nodePointer == NULL) {
         return ACTOR_ERROR_INVALUE;
     }
 
     // init node pointer to NULL
-    *node = NULL;
+    *nodePointer = NULL;
 
     // create node
-    actor_node_t newNode = malloc(sizeof(actor_node_s));
+    actor_node_t node = malloc(sizeof(actor_node_s));
 
     // check success
-    if (newNode == NULL) {
+    if (node == NULL) {
         return ACTOR_ERROR_MEMORY;
     }
 
     // init struct
-    newNode->id = id;
-    newNode->message_queues = NULL;
-    newNode->remote_nodes = NULL;
-    newNode->message_queue_count = size;
-    newNode->message_queue_pos = 0;
-    newNode->process_semaphore = NULL;
-    newNode->message_queue_create_semaphore = NULL;
-    newNode->process_count = 0;
+    node->id = id;
+    node->message_queues = NULL;
+    node->remote_nodes = NULL;
+    node->message_queue_count = size;
+    node->message_queue_pos = 0;
+    node->process_semaphore = NULL;
+    node->message_queue_create_semaphore = NULL;
+    node->process_count = 0;
 
     // create message queues
-    newNode->message_queues = malloc(sizeof(actor_message_queue_t) * size);
+    node->message_queues = malloc(sizeof(actor_message_queue_t) * size);
 
     // check success
-    if (newNode->message_queues == NULL) {
+    if (node->message_queues == NULL) {
         // release node
-        actor_node_release(newNode);
+        actor_node_release(&node);
 
         return ACTOR_ERROR_MEMORY;
     }
 
     // create remote node array
-    newNode->remote_nodes = malloc(sizeof(int) * ACTOR_NODE_MAX_REMOTE_NODES);
+    node->remote_nodes = malloc(sizeof(int) * ACTOR_NODE_MAX_REMOTE_NODES);
 
     // check success
-    if (newNode->remote_nodes == NULL) {
+    if (node->remote_nodes == NULL) {
         // release node
-        actor_node_release(newNode);
+        actor_node_release(&node);
 
         return ACTOR_ERROR_MEMORY;
     }
 
     // init array
     for (actor_size_t i = 0; i < ACTOR_NODE_MAX_REMOTE_NODES; i++) {
-        newNode->remote_nodes[i] = -1;
+        node->remote_nodes[i] = ACTOR_INVALID_ID;
     }
 
     // create process semaphore
-    newNode->process_semaphore = dispatch_semaphore_create(0);
+    node->process_semaphore = dispatch_semaphore_create(0);
 
     // check success
-    if (newNode->process_semaphore == NULL) {
+    if (node->process_semaphore == NULL) {
         // release node
-        actor_node_release(newNode);
+        actor_node_release(&node);
 
         return ACTOR_ERROR_DISPATCH;
     }
 
     // create message queue create semaphore
-    newNode->message_queue_create_semaphore = dispatch_semaphore_create(1);
+    node->message_queue_create_semaphore = dispatch_semaphore_create(1);
 
     // check success
-    if (newNode->message_queue_create_semaphore == NULL) {
+    if (node->message_queue_create_semaphore == NULL) {
         // release node
-        actor_node_release(newNode);
+        actor_node_release(&node);
 
         return ACTOR_ERROR_DISPATCH;
     }
 
     // set node pointer
-    *node = newNode;
+    *nodePointer = node;
 
     return ACTOR_SUCCESS;
 }
 
-actor_error_t actor_node_release(actor_node_t node) {
+actor_error_t actor_node_release(actor_node_t* nodePointer) {
     // check for valid node
-    if (node == NULL) {
+    if ((nodePointer == NULL) || (*nodePointer == NULL)) {
         return ACTOR_ERROR_INVALUE;
     }
+
+    // get node
+    actor_node_t node = *nodePointer;
 
     // wait for all processes to complete
     dispatch_semaphore_wait(node->process_semaphore, DISPATCH_TIME_FOREVER);
@@ -96,7 +99,7 @@ actor_error_t actor_node_release(actor_node_t node) {
     // release message queues
     if (node->message_queues != NULL) {
         for (actor_size_t i = 0; i < node->message_queue_count; i++) {
-            actor_message_queue_release(node->message_queues[i]);
+            actor_message_queue_release(&node->message_queues[i]);
         }
 
         free(node->message_queues);
@@ -120,6 +123,9 @@ actor_error_t actor_node_release(actor_node_t node) {
     // free memory
     free(node);
 
+    // set node pointer to NULL
+    *nodePointer = NULL;
+
     return ACTOR_SUCCESS;
 }
 
@@ -140,7 +146,7 @@ actor_error_t actor_node_spawn_process(actor_node_t node, actor_process_id_t* pi
     }
 
     // create process
-    actor_process_t process = NULL;
+    __block actor_process_t process = NULL;
     error = actor_process_create(node, &process);
 
     // check success
@@ -155,7 +161,7 @@ actor_error_t actor_node_spawn_process(actor_node_t node, actor_process_id_t* pi
     // check for success
     if (dispatch_queue == NULL) {
         // cleanup
-        actor_process_release(process);
+        actor_process_release(&process);
 
         return ACTOR_ERROR_DISPATCH;
     }
@@ -177,7 +183,7 @@ actor_error_t actor_node_spawn_process(actor_node_t node, actor_process_id_t* pi
             sizeof(actor_process_error_message_s));
 
         // cleanup process
-        actor_process_release(process);
+        actor_process_release(&process);
     });
 
     // set pid
@@ -231,7 +237,7 @@ actor_error_t actor_node_send_message(actor_node_t node,
         // check success
         if (error != ACTOR_SUCCESS) {
             // release message
-            actor_message_release(message);
+            actor_message_release(&message);
 
             return error;
         }
@@ -244,7 +250,7 @@ actor_error_t actor_node_send_message(actor_node_t node,
         // check success
         if (error != ACTOR_SUCCESS) {
             // release message
-            actor_message_release(message);
+            actor_message_release(&message);
 
             return error;
         }
@@ -366,7 +372,7 @@ actor_error_t actor_node_message_queue_release(actor_node_t node,
     }
 
     // release message queue
-    actor_message_queue_release(node->message_queues[pid]);
+    actor_message_queue_release(&node->message_queues[pid]);
 
     // set queue pointer to NULL
     node->message_queues[pid] = NULL;

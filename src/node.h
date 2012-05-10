@@ -20,11 +20,11 @@ typedef actor_node_s* actor_node_t;
 #include "process.h"
 
 // create node
-actor_error_t actor_node_create(actor_node_t* node, actor_node_id_t id,
+actor_error_t actor_node_create(actor_node_t* nodePointer, actor_node_id_t id,
     actor_size_t size);
 
 // cleanup
-actor_error_t actor_node_release(actor_node_t node);
+actor_error_t actor_node_release(actor_node_t* nodePointer);
 
 // spawn new process
 actor_error_t actor_node_spawn_process(actor_node_t node, actor_process_id_t* pid,

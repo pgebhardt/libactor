@@ -22,13 +22,13 @@ typedef struct {
 typedef actor_process_error_message_s* actor_process_error_message_t;
 
 // Process block signature
-typedef actor_error_t (^actor_process_function_t)(actor_process_t const self);
+typedef actor_error_t (^actor_process_function_t)(actor_process_t self);
 
 // create process
-actor_error_t actor_process_create(actor_node_t node, actor_process_t* process);
+actor_error_t actor_process_create(actor_node_t node, actor_process_t* processPointer);
 
 // release process
-actor_error_t actor_process_release(actor_process_t process);
+actor_error_t actor_process_release(actor_process_t* processPointer);
 
 // message receive
 actor_error_t actor_process_receive_message(actor_process_t process, actor_message_t* message,
