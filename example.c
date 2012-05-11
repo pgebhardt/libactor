@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "actor/actor.h"
+#include <actor/actor.h>
 
 actor_error_t main_process(actor_process_t main) {
     // ping funktion
@@ -22,7 +22,7 @@ actor_error_t main_process(actor_process_t main) {
             printf("%d.%d received %s\n", pong->nid, pong->pid, (char*)message->data);
 
             // release message
-            actor_message_release(message);
+            actor_message_release(&message);
 
             // send pong
             actor_send(pong, ping->nid, ping->pid, ACTOR_TYPE_CHAR, "Pong!", 6);
@@ -48,7 +48,7 @@ actor_error_t main_process(actor_process_t main) {
         printf("%d.%d received %s\n", ping->nid, ping->pid, (char*)message->data);
 
         // release message
-        actor_message_release(message);
+        actor_message_release(&message);
 
        return ACTOR_SUCCESS;
     };
@@ -76,7 +76,7 @@ actor_error_t main_process(actor_process_t main) {
         }
 
         // release message
-        actor_message_release(message);
+        actor_message_release(&message);
 
         // slepp a bit
         actor_process_sleep(main, 1.0);
@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
         });
 
     // release node
-    actor_node_release(node);
+    actor_node_release(&node);
 
     return EXIT_SUCCESS;
 }

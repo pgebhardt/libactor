@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "actor/actor.h"
+#include <actor/actor.h>
 
 actor_error_t main_process(actor_process_t self) {
     // error
@@ -17,7 +17,7 @@ actor_error_t main_process(actor_process_t self) {
     // main loop
     while (true) {
         // let client start pong process
-        error = actor_message_send(self, server, 0, ACTOR_TYPE_CUSTOM, "Start", 6);
+        error = actor_send(self, server, 0, ACTOR_TYPE_CUSTOM, "Start", 6);
 
         // check success
         if (error != ACTOR_SUCCESS) {
@@ -26,7 +26,7 @@ actor_error_t main_process(actor_process_t self) {
 
         // receive pong id
         actor_message_t message = NULL;
-        error = actor_message_receive(self, &message, 10.0);
+        error = actor_receive(self, &message, 10.0);
 
         // check success
         if (error != ACTOR_SUCCESS) {
@@ -42,15 +42,15 @@ actor_error_t main_process(actor_process_t self) {
         actor_process_id_t pong = *(actor_process_id_t*)message->data;
 
         // release message
-        actor_message_release(message);
+        actor_message_release(&message);
 
         // start ping process
-        actor_process_spawn(self->node, NULL, ^actor_error_t(actor_process_t ping) {
+        actor_spawn(self->node, NULL, ^actor_error_t(actor_process_t ping) {
             // link to main process
             actor_process_link(ping, self->nid, self->pid);
 
             // send ping to pong process
-            actor_message_send(ping, server, pong, ACTOR_TYPE_UINT, &ping->pid,
+            actor_send(ping, server, pong, ACTOR_TYPE_UINT, &ping->pid,
                 sizeof(actor_process_id_t));
 
             // print
@@ -59,14 +59,14 @@ actor_error_t main_process(actor_process_t self) {
 
             // receive pong message
             actor_message_t pong_message = NULL;
-            if (actor_message_receive(ping, &pong_message, 10.0) != ACTOR_SUCCESS) {
+            if (actor_receive(ping, &pong_message, 10.0) != ACTOR_SUCCESS) {
                 return ACTOR_ERROR;
             }
 
             // check type
             if (pong_message->type != ACTOR_TYPE_UINT) {
                 // release message
-                actor_message_release(pong_message);
+                actor_message_release(&pong_message);
 
                 return ACTOR_ERROR;
             }
@@ -76,13 +76,13 @@ actor_error_t main_process(actor_process_t self) {
                 server, *(actor_process_id_t*)pong_message->data);
 
             // release message
-            actor_message_release(pong_message);
+            actor_message_release(&pong_message);
 
             return ACTOR_SUCCESS;
         });
 
         // receive quit message
-        error = actor_message_receive(self, &message, 10.0);
+        error = actor_receive(self, &message, 10.0);
 
         // check success
         if (error != ACTOR_SUCCESS) {
@@ -96,7 +96,7 @@ actor_error_t main_process(actor_process_t self) {
         // check error
         if (error_message->error != ACTOR_SUCCESS) {
             // release message
-            actor_message_release(message);
+            actor_message_release(&message);
 
             return ACTOR_ERROR;
         }
@@ -116,12 +116,12 @@ int main(int argc, char* argv[]) {
     }
 
     // start main process
-    actor_process_spawn(node, NULL, ^actor_error_t(actor_process_t self) {
+    actor_spawn(node, NULL, ^actor_error_t(actor_process_t self) {
         return main_process(self);
     });
 
     // release node
-    actor_node_release(node);
+    actor_node_release(&node);
 
     return EXIT_SUCCESS;
 }
