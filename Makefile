@@ -5,8 +5,7 @@ LDFLAGS =
 
 # Directories
 SRC = src
-BUILD = build
-OUTPUT = actor
+OUTPUT = build
 
 # Install directories
 INCLUDES = /usr/local/include/actor
@@ -14,7 +13,7 @@ LIBS = /usr/local/lib
 
 # Object files
 _OBJ = actor.o message.o process.o node.o distributer.o error.o
-OBJ = $(patsubst %, $(BUILD)/%, $(_OBJ))
+OBJ = $(patsubst %, $(OUTPUT)/%, $(_OBJ))
 
 # Dependencies
 _DEPS = actor.h message.h process.h node.h distributer.h error.h common.h
@@ -24,21 +23,21 @@ DEPS = $(patsubst %, $(SRC)/%, $(_DEPS))
 BIN = libactor.a
 
 # Rule for library
-$(BIN): $(OBJ)
+$(BIN): $(OBJ) $(DEPS)
+	mkdir -p $(OUTPUT)
 	ar rc $(BIN) $(OBJ)
 	ranlib $(BIN)
-	mkdir -p $(OUTPUT)
 	mv $(BIN) $(OUTPUT)
 	cp $(SRC)/*.h $(OUTPUT)
 
 # Rule for object files
-$(BUILD)/%.o: $(SRC)/%.c $(DEPS)
-	mkdir -p $(BUILD)
+$(OUTPUT)/%.o: $(SRC)/%.c $(DEPS)
+	mkdir -p $(OUTPUT)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # Cleanup
 clean:
-	rm -rf $(BUILD)
+	rm -rf $(OUTPUT)
 
 # Install
 install: $(BIN)
