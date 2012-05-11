@@ -22,15 +22,24 @@ to be compiled with clang/llvm.
 
 ## Installl
 
-Currently the included makefile works for OS X. On linux or bsd you need to add some libraries.
+To install libactor make shure libdispatch is installed. On OS X it is included since 10.6.
+On Linux there are several ports. On Debian based distributions simply type:
+
+    sudo apt-get install libdispatch-dev
+
+Install of libactor:
+
+    sudo make install
 
 ## Example
 
 To build the example on OS X type:
 
-    make
-    clang -fblocks -o example example.c -L. -lactor
-    ./example
+    clang -o example example.c -lactor
+
+On Linux:
+
+    clang -fblocks -o example example.c -lactor -ldispatch -lBlocksRuntime
 
 ## To be continued
 
