@@ -44,10 +44,8 @@ BIN = libactor.a
 # Rule for library
 $(BIN): $(OBJ) $(DEPS)
 	mkdir -p $(OUTPUT)
-	ar rc $(BIN) $(OBJ)
-	ranlib $(BIN)
-	mv $(BIN) $(OUTPUT)
-	cp $(SRC)/*.h $(OUTPUT)
+	ar rc $(OUTPUT)/$(BIN) $(OBJ)
+	ranlib $(OUTPUT)/$(BIN)
 
 # Rule for object files
 $(OUTPUT)/%.o: $(SRC)/%.c $(DEPS)
@@ -61,7 +59,7 @@ clean:
 # Install
 install: $(BIN)
 	mkdir -p $(INCLUDES)
-	install -m 0644 $(OUTPUT)/*.h $(INCLUDES)
+	install -m 0644 $(SRC)/*.h $(INCLUDES)
 	install -m 0644 $(OUTPUT)/$(BIN) $(LIBS)
 
 # Uninstall
