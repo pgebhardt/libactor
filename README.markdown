@@ -20,7 +20,7 @@ Libactor has been tested in:
 Libactor uses **libdispatch** and makes masivly use of the block syntax for C. So it needs
 to be compiled with clang/llvm.
 
-## Installl
+## Install
 
 To install libactor make shure libdispatch is installed. On OS X it is included since 10.6.
 On Linux there are several ports. On Debian based distributions simply type:
