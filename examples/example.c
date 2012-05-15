@@ -20,84 +20,74 @@
 #include <stdio.h>
 #include <actor/actor.h>
 
+actor_error_t ping_function(actor_process_t self) {
+    printf("%d.%d: Ping!\n", self->nid, self->pid);
+
+    return ACTOR_SUCCESS;
+}
+
+actor_error_t pong_function(actor_process_t self) {
+    printf("%d.%d: Pong!\n", self->nid, self->pid);
+
+    return ACTOR_SUCCESS;
+}
+
 actor_error_t main_process(actor_process_t main) {
-    // ping funktion
-    actor_error_t (^ping_function)(actor_process_t) = ^actor_error_t(actor_process_t ping) {
-        // start pong process
-        actor_process_id_t pong_id = ACTOR_INVALID_ID;
-        actor_spawn(ping->node, &pong_id, ^actor_error_t(actor_process_t pong) {
-            // receive ping message
-            actor_message_t message = NULL;
-            if (actor_receive(pong, &message, 10.0) != ACTOR_SUCCESS) {
-                return ACTOR_ERROR;
-            }
-
-            // check message type
-            if (message->type != ACTOR_TYPE_CHAR) {
-                return ACTOR_ERROR;
-            }
-
-            // print message
-            printf("%d.%d received %s\n", pong->nid, pong->pid, (char*)message->data);
-
-            // release message
-            actor_message_release(&message);
-
-            // send pong
-            actor_send(pong, ping->nid, ping->pid, ACTOR_TYPE_CHAR, "Pong!", 6);
-
-            return ACTOR_SUCCESS;
-        });
-
-        // send ping message
-        actor_send(ping, ping->nid, pong_id, ACTOR_TYPE_CHAR, "Ping!", 6);
-
-        // receive message
-        actor_message_t message = NULL;
-        if (actor_receive(ping, &message, 10.0) != ACTOR_SUCCESS) {
-            return ACTOR_ERROR;
-        }
-
-        // check message type
-        if (message->type != ACTOR_TYPE_CHAR) {
-            return ACTOR_ERROR;
-        }
-
-        // print message
-        printf("%d.%d received %s\n", ping->nid, ping->pid, (char*)message->data);
-
-        // release message
-        actor_message_release(&message);
-
-       return ACTOR_SUCCESS;
-    };
+    // error
+    actor_error_t error = ACTOR_SUCCESS;
 
     // main loop
     while (true) {
-        // start ping process
-        actor_spawn(main->node, NULL, ^actor_error_t(actor_process_t self) {
-            // link to main
+        // spawn ping process
+        actor_process_id_t ping = ACTOR_INVALID_ID;
+        error = actor_spawn(main->node, &ping, ^actor_error_t(actor_process_t self) {
+            // link to main process
             actor_process_link(self, main->nid, main->pid);
 
-            // start ping process
             return ping_function(self);
         });
 
-        // receive error
+        // check success
+        if (error != ACTOR_SUCCESS) {
+            return error;
+        }
+
+        // spawn pong process
+        actor_process_id_t pong = ACTOR_INVALID_ID;
+        error = actor_spawn(main->node, &pong, ^actor_error_t(actor_process_t self) {
+            // link to main process
+            actor_process_link(self, main->nid, main->pid);
+
+            return pong_function(self);
+        });
+
+        // check success
+        if (error != ACTOR_SUCCESS) {
+            return error;
+        }
+
+        // get error message
         actor_message_t message = NULL;
-        if (actor_receive(main, &message, 10.0) != ACTOR_SUCCESS) {
-            return ACTOR_ERROR;
+        error = actor_receive(main, &message, 2.0);
+
+        // check success
+        if (error != ACTOR_SUCCESS) {
+            return error;
         }
 
-        // check message type
-        if (message->type != ACTOR_TYPE_ERROR_MESSAGE) {
-            return ACTOR_ERROR;
+        // cast to error message
+        actor_process_error_message_t error_message =
+            (actor_process_error_message_t)message->data;
+
+        // check error
+        if (error_message->error != ACTOR_SUCCESS) {
+            // cleanup
+            actor_message_release(&message);
+
+            return error_message->error;
         }
 
-        // release message
-        actor_message_release(&message);
-
-        // slepp a bit
+        // wait a bit
         actor_process_sleep(main, 1.0);
     }
 
@@ -113,7 +103,13 @@ int main(int argc, char* argv[]) {
 
     // start main process
     actor_spawn(node, NULL, ^actor_error_t(actor_process_t self) {
-            return main_process(self);
+            // call main process
+            actor_error_t error = main_process(self);
+
+            // print result
+            printf("main process died with result: %s!\n", actor_error_string(error));
+
+            return error;
         });
 
     // release node
