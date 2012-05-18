@@ -24,7 +24,7 @@ LDFLAGS =
 
 # Directories
 SRC = src
-OUTPUT = build
+BUILD = build
 
 # Install directories
 INCLUDES = /usr/local/include/actor
@@ -32,7 +32,7 @@ LIBS = /usr/local/lib
 
 # Object files
 _OBJ = actor.o message.o process.o node.o distributer.o error.o
-OBJ = $(patsubst %, $(OUTPUT)/%, $(_OBJ))
+OBJ = $(patsubst %, $(BUILD)/%, $(_OBJ))
 
 # Dependencies
 _DEPS = actor.h message.h process.h node.h distributer.h error.h common.h
@@ -43,24 +43,24 @@ BIN = libactor.a
 
 # Rule for library
 $(BIN): $(OBJ) $(DEPS)
-	mkdir -p $(OUTPUT)
-	ar rc $(OUTPUT)/$(BIN) $(OBJ)
-	ranlib $(OUTPUT)/$(BIN)
+	mkdir -p $(BUILD)
+	ar rc $(BUILD)/$(BIN) $(OBJ)
+	ranlib $(BUILD)/$(BIN)
 
 # Rule for object files
-$(OUTPUT)/%.o: $(SRC)/%.c $(DEPS)
-	mkdir -p $(OUTPUT)
+$(BUILD)/%.o: $(SRC)/%.c $(DEPS)
+	mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # Cleanup
 clean:
-	rm -rf $(OUTPUT)
+	rm -rf $(BUILD)
 
 # Install
 install: $(BIN)
 	mkdir -p $(INCLUDES)
 	install -m 0644 $(SRC)/*.h $(INCLUDES)
-	install -m 0644 $(OUTPUT)/$(BIN) $(LIBS)
+	install -m 0644 $(BUILD)/$(BIN) $(LIBS)
 
 # Uninstall
 uninstall:
