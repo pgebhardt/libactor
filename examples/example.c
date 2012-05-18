@@ -21,13 +21,127 @@
 #include <actor/actor.h>
 
 actor_error_t ping_function(actor_process_t self) {
-    printf("%d.%d: Ping!\n", self->nid, self->pid);
+    // error
+    actor_error_t error = ACTOR_SUCCESS;
+
+    // get pong id
+    actor_message_t message = NULL;
+    error = actor_receive(self, &message, 10.0);
+
+    // check success
+    if (error != ACTOR_SUCCESS) {
+        return error;
+    }
+
+    // check message type
+    if (message->type != ACTOR_TYPE_PROCESSID) {
+        // cleanup
+        actor_message_release(&message);
+
+        return ACTOR_ERROR;
+    }
+
+    // cast pong id
+    actor_process_id_t pong = *(actor_process_id_t*)message->data;
+
+    // release message
+    actor_message_release(&message);
+
+    // send ping to pong
+    error = actor_send(self, self->nid, pong, ACTOR_TYPE_CHAR, "Ping!", 6);
+
+    // check success
+    if (error != ACTOR_SUCCESS) {
+        return error;
+    }
+
+    printf("%d.%d: Ping sent to %d.%d!\n", self->nid, self->pid, self->nid,
+        pong);
+
+    // receive pong
+    error = actor_receive(self, &message, 10.0);
+
+    // check success
+    if (error != ACTOR_SUCCESS) {
+        return error;
+    }
+
+    // check message type
+    if (message->type != ACTOR_TYPE_CHAR) {
+        // cleanup
+        actor_message_release(&message);
+
+        return ACTOR_ERROR;
+    }
+
+    // print message
+    printf("%d.%d: received %s\n", self->nid, self->pid, (char*)message->data);
+
+    // release message
+    actor_message_release(&message);
 
     return ACTOR_SUCCESS;
 }
 
 actor_error_t pong_function(actor_process_t self) {
-    printf("%d.%d: Pong!\n", self->nid, self->pid);
+    // error
+    actor_error_t error = ACTOR_SUCCESS;
+
+    // get ping id
+    actor_message_t message = NULL;
+    error = actor_receive(self, &message, 10.0);
+
+    // check success
+    if (error != ACTOR_SUCCESS) {
+        return error;
+    }
+
+    // check message type
+    if (message->type != ACTOR_TYPE_PROCESSID) {
+        // cleanup
+        actor_message_release(&message);
+
+        return ACTOR_ERROR;
+    }
+
+    // cast ping id
+    actor_process_id_t ping = *(actor_process_id_t*)message->data;
+
+    // release message
+    actor_message_release(&message);
+
+    // receive ping
+    error = actor_receive(self, &message, 10.0);
+
+    // check success
+    if (error != ACTOR_SUCCESS) {
+        return error;
+    }
+
+    // check message type
+    if (message->type != ACTOR_TYPE_CHAR) {
+        // cleanup
+        actor_message_release(&message);
+
+        return ACTOR_ERROR;
+    }
+
+    // print message
+    printf("%d.%d: received %s\n", self->nid, self->pid, (char*)message->data);
+
+    // release message
+    actor_message_release(&message);
+
+    // send pong to ping
+    error = actor_send(self, self->nid, ping, ACTOR_TYPE_CHAR, "Pong!", 6);
+
+    // check success
+    if (error != ACTOR_SUCCESS) {
+        return error;
+    }
+
+    printf("%d.%d: Pong sent to %d.%d!\n", self->nid, self->pid, self->nid,
+        ping);
 
     return ACTOR_SUCCESS;
 }
@@ -66,25 +180,46 @@ actor_error_t main_process(actor_process_t main) {
             return error;
         }
 
-        // get error message
-        actor_message_t message = NULL;
-        error = actor_receive(main, &message, 2.0);
+        // send process ids
+        actor_send(main, main->nid, pong, ACTOR_TYPE_PROCESSID, &ping, sizeof(actor_process_id_t));
+        actor_send(main, main->nid, ping, ACTOR_TYPE_PROCESSID, &pong, sizeof(actor_process_id_t));
 
-        // check success
-        if (error != ACTOR_SUCCESS) {
-            return error;
-        }
+        // get result of both processes
+        for (int i = 0; i < 2; i++) {
+            // message loop
+            while (true) {
+                // get error message
+                actor_message_t message = NULL;
+                error = actor_receive(main, &message, 2.0);
 
-        // cast to error message
-        actor_process_error_message_t error_message =
-            (actor_process_error_message_t)message->data;
+                // check success
+                if (error != ACTOR_SUCCESS) {
+                    return error;
+                }
 
-        // check error
-        if (error_message->error != ACTOR_SUCCESS) {
-            // cleanup
-            actor_message_release(&message);
+                // check message type
+                if (message->type != ACTOR_TYPE_ERROR_MESSAGE) {
+                    // cleanup
+                    actor_message_release(&message);
 
-            return error_message->error;
+                    continue;
+                }
+
+                // cast to error message
+                actor_process_error_message_t error_message =
+                    (actor_process_error_message_t)message->data;
+
+                // check error
+                if (error_message->error != ACTOR_SUCCESS) {
+                    // cleanup
+                    actor_message_release(&message);
+
+                    return error_message->error;
+                }
+
+                // exit loop
+                break;
+            }
         }
 
         // wait a bit
