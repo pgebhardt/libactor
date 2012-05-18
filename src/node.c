@@ -22,8 +22,8 @@
 // create node
 actor_error_t actor_node_create(actor_node_t* nodePointer, actor_node_id_t id,
     actor_size_t size) {
-    // check valid node pointer
-    if (nodePointer == NULL) {
+    // check valid input
+    if ((nodePointer == NULL) || (id < 0) || (size <= 0)) {
         return ACTOR_ERROR_INVALUE;
     }
 
