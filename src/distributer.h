@@ -17,8 +17,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef DISTRIBUTER_H
-#define DISTRIBUTER_H
+#ifndef ACTOR_DISTRIBUTER_H
+#define ACTOR_DISTRIBUTER_H
 
 // key length
 #define ACTOR_DISTRIBUTER_KEYLENGTH (30)

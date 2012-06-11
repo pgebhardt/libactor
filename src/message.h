@@ -17,8 +17,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef MESSAGE_H
-#define MESSAGE_H
+#ifndef ACTOR_MESSAGE_H
+#define ACTOR_MESSAGE_H
 
 // message data
 typedef void* actor_message_data_t;

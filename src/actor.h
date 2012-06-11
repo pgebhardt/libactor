@@ -17,8 +17,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef ACTOR_H
-#define ACTOR_H
+#ifndef ACTOR_ACTOR_H
+#define ACTOR_ACTOR_H
 
 // standard includes
 #include <stdlib.h>
