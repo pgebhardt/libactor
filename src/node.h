@@ -17,8 +17,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef NODE_H
-#define NODE_H
+#ifndef ACTOR_NODE_H
+#define ACTOR_NODE_H
 
 // maximum remote nodes count
 #define ACTOR_NODE_MAX_REMOTE_NODES (1024)
@@ -65,6 +65,9 @@ actor_error_t actor_node_get_message_queue(actor_node_t node,
 // release message queue
 actor_error_t actor_node_message_queue_release(actor_node_t node,
     actor_process_id_t pid);
+
+// wait for processes to complete
+actor_error_t actor_node_wait_for_processes(actor_node_t node, actor_time_t timeout);
 
 // connect to remote node
 actor_error_t actor_node_connect(actor_node_t node, actor_node_id_t* nid,

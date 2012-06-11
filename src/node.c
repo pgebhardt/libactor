@@ -112,9 +112,6 @@ actor_error_t actor_node_release(actor_node_t* nodePointer) {
     // get node
     actor_node_t node = *nodePointer;
 
-    // wait for all processes to complete
-    dispatch_semaphore_wait(node->process_semaphore, DISPATCH_TIME_FOREVER);
-
     // release message queues
     if (node->message_queues != NULL) {
         for (actor_size_t i = 0; i < node->message_queue_count; i++) {
@@ -402,6 +399,26 @@ actor_error_t actor_node_message_queue_release(actor_node_t node,
     // send signal if no process left
     if (node->process_count == 0) {
         dispatch_semaphore_signal(node->process_semaphore);
+    }
+
+    return ACTOR_SUCCESS;
+}
+
+// wait for processes to complete
+actor_error_t actor_node_wait_for_processes(actor_node_t node, actor_time_t timeout) {
+    // check input
+    if ((node == NULL) || (timeout < 0.0)) {
+        return ACTOR_ERROR_INVALUE;
+    }
+
+    // wait for all processes to complete
+    long err = dispatch_semaphore_wait(node->process_semaphore,
+        dispatch_time(DISPATCH_TIME_NOW,
+            (dispatch_time_t)(timeout * (actor_time_t)NSEC_PER_SEC)));
+
+    // check for timeout
+    if (err != 0) {
+        return ACTOR_ERROR_TIMEOUT;
     }
 
     return ACTOR_SUCCESS;
