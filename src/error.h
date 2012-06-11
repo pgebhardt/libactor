@@ -24,15 +24,15 @@
 typedef unsigned int actor_error_t;
 
 // standard errors
-#define ACTOR_SUCCESS                   (0)
-#define ACTOR_ERROR                     (1)
-#define ACTOR_ERROR_INVALUE             (2)
-#define ACTOR_ERROR_MEMORY              (3)
-#define ACTOR_ERROR_TIMEOUT             (4)
-#define ACTOR_ERROR_DISPATCH            (5)
-#define ACTOR_ERROR_TOO_MANY_PROCESSES  (6)
-#define ACTOR_ERROR_NETWORK             (7)
-#define ACTOR_ERROR_MESSAGE_PASSING     (8)
+#define ACTOR_SUCCESS                   ((actor_error_t)(0))
+#define ACTOR_ERROR                     ((actor_error_t)(1))
+#define ACTOR_ERROR_INVALUE             ((actor_error_t)(2))
+#define ACTOR_ERROR_MEMORY              ((actor_error_t)(3))
+#define ACTOR_ERROR_TIMEOUT             ((actor_error_t)(4))
+#define ACTOR_ERROR_DISPATCH            ((actor_error_t)(5))
+#define ACTOR_ERROR_TOO_MANY_PROCESSES  ((actor_error_t)(6))
+#define ACTOR_ERROR_NETWORK             ((actor_error_t)(7))
+#define ACTOR_ERROR_MESSAGE_PASSING     ((actor_error_t)(8))
 
 // get error string by error
 const char* actor_error_string(actor_error_t error);
