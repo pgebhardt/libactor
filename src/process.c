@@ -17,7 +17,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "actor.h"
+#include "../include/actor.h"
 
 // create process
 actor_error_t actor_process_create(actor_node_t node, actor_process_t* processPointer) {

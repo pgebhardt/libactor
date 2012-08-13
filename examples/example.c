@@ -18,7 +18,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdio.h>
-#include <actor/actor.h>
+#include "../include/actor.h"
 
 actor_error_t ping_function(actor_process_t self) {
     // error
@@ -246,6 +246,9 @@ int main(int argc, char* argv[]) {
 
             return error;
         });
+
+    // wait for processes to complete
+    actor_node_wait_for_processes(node, 30.0);
 
     // release node
     actor_node_release(&node);

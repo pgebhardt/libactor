@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <string.h>
-#include "actor.h"
+#include "../include/actor.h"
 
 // message send process
 actor_error_t actor_distributer_message_send(actor_process_t self, int sock) {

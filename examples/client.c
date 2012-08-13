@@ -18,7 +18,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdio.h>
-#include <actor/actor.h>
+#include "../include/actor.h"
 
 actor_error_t main_process(actor_process_t self) {
     // error

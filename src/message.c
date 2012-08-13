@@ -18,7 +18,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <string.h>
-#include "actor.h"
+#include "../include/actor.h"
 
 // create new message
 actor_error_t actor_message_create(actor_message_t* messagePointer,
