@@ -139,6 +139,9 @@ int main(int argc, char* argv[]) {
         return main_process(self);
     });
 
+    // wait for processes to complete
+    actor_node_wait_for_processes(node, 30.0);
+
     // release node
     actor_node_release(&node);
 
