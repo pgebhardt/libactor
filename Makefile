@@ -22,7 +22,6 @@ SRC = src
 INCLUDES = include
 BUILD = build
 EXAMPLES = examples
-BIN = bin
 
 # Copmiler and flags
 CC = clang
@@ -68,8 +67,8 @@ $(BUILD)/%.o: $(SRC)/%.c $(DEPS)
 # Install
 install: $(BIN)
 	mkdir -p $(INSTALL_INCLUDES)
-	install -m 0644 $(SRC)/*.h $(INSTALL_INCLUDES)
-	install -m 0644 $(BUILD)/$(BIN) $(INSTALL_LIB)
+	install -m 0644 $(INCLUDES)/*.h $(INSTALL_INCLUDES)
+	install -m 0644 $(BUILD)/$(LIB) $(INSTALL_LIB)
 
 # Uninstall
 uninstall:
